@@ -42,7 +42,8 @@ async def downloader(client,message):
 
 @Client.on_callback_query()
 async def cb_(client,callback_query):
-    cb_data = callback_query.data 
+    cb_data = callback_query.data.split('|')[0]
+    imgdir = callback_query.data.split('|')[1]
     msg = callback_query.message
     if cb_data == 's&m':
         await msg.edit(
@@ -64,7 +65,7 @@ async def cb_(client,callback_query):
         await msg.edit(
             text='Please Select Compresssion Ratio',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='low',callback_data=f'low|imgdir')],
+                [InlineKeyboardButton(text='low',callback_data=f'low|{imgdir}')],
                 [InlineKeyboardButton(text='recommended',callback_data=f'medium|{imgdir}')],
                 [InlineKeyboardButton(text='high',callback_data=f'high|{imgdir}')]
             ])
