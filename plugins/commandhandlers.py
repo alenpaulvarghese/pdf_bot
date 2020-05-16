@@ -30,9 +30,9 @@ async def downloader(client,message):
         await dwn.edit(
         text='Choose any options',
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(text='Compress',callback_data='compress')],
-            [InlineKeyboardButton(text='Split and Merge',callback_data='s&m')],
-            [InlineKeyboardButton(text='PDF Protections',callback_data='pass')]
+            [InlineKeyboardButton(text='Compress',callback_data=f'compress|{imgdir}')],
+            [InlineKeyboardButton(text='Split and Merge',callback_data=f's&m|{imgdir}')],
+            [InlineKeyboardButton(text='PDF Protections',callback_data=f'pass|{imgdir}')]
             
         ])
     )
@@ -48,25 +48,25 @@ async def cb_(client,callback_query):
         await msg.edit(
             text='Please Choose',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='Split PDF',callback_data='slicer')],
-                [InlineKeyboardButton(text='Merge PDF',callback_data='merger')]
+                [InlineKeyboardButton(text='Split PDF',callback_data=f'slicer|{imgdir}')],
+                [InlineKeyboardButton(text='Merge PDF',callback_data=f'merger|{imgdir}')]
             ])
         )
     elif cb_data == 'pass':
         await msg.edit(
             text='Please Choose',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='encrypt',callback_data='encrypter')],
-                [InlineKeyboardButton(text='decrypt',callback_data='decrypter')]
+                [InlineKeyboardButton(text='encrypt',callback_data=f'encrypter|{imgdir}')],
+                [InlineKeyboardButton(text='decrypt',callback_data=f'decrypter|{imgdir}')]
             ])
         )
     elif cb_data == 'compress':
         await msg.edit(
             text='Please Select Compresssion Ratio',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='low',callback_data='low | compress')],
-                [InlineKeyboardButton(text='recommended',callback_data='medium | compress')],
-                [InlineKeyboardButton(text='high',callback_data='high | compress')]
+                [InlineKeyboardButton(text='low',callback_data=f'low|imgdir')],
+                [InlineKeyboardButton(text='recommended',callback_data=f'medium|{imgdir}')],
+                [InlineKeyboardButton(text='high',callback_data=f'high|{imgdir}')]
             ])
         )
     
