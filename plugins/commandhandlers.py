@@ -1,17 +1,19 @@
 from pyrogram import Client, Filters, InlineKeyboardButton, InlineKeyboardMarkup
-from plugins.tools_bundle import pdf_silcer
+from plugins.tools_bundle import pdf_silcer, is_encrypted
+from plugins.pdfbot_locale import Phrase
 import asyncio
 import os
 
 
 @Client.on_message(Filters.command(["start"]))
 async def start(client, message):
-    await client.send_message(
-        chat_id=message.chat.id,
-        text=f'{message.chat.id}',
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(text='decrypt', callback_data='decrypter')]
-        ])
+    dwn = await message.reply_text(
+                text='Choose any options',
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text='Compress', callback_data='compress')],
+                    [InlineKeyboardButton(text='Split and Merge', callback_data='s&m')],
+                    [InlineKeyboardButton(text='PDF Protections', callback_data='pass')]
+                ])
     )
 
 
@@ -28,37 +30,41 @@ async def downloader(client, message):
             message=message,
             file_name=imgdir
         )
-        await dwn.edit(
-            text='Choose any options',
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='Compress', callback_data=f'compress|{imgdir}')],
-                [InlineKeyboardButton(text='Split and Merge', callback_data=f's&m|{imgdir}')],
-                [InlineKeyboardButton(text='PDF Protections', callback_data=f'pass|{imgdir}')]
-            ])
-        )
+        # checking for file encryption
+        boolean = await is_encrypted(imgdir)
+        if boolean:
+            await dwn.edit(
+                text='Choose any options',
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text='Compress', callback_data=f'compress')],
+                    [InlineKeyboardButton(text='Split and Merge', callback_data=f's&m')],
+                    [InlineKeyboardButton(text='PDF Protections', callback_data=f'pass')]
+                ])
+            )
+        else:
+            pass
     else:
         await message.reply(text='Oops This is not a pdf')
 
 
 @Client.on_callback_query()
 async def cb_(client, callback_query):
-    cb_data = callback_query.data.split('|')[0]
-    imgdir = callback_query.data.split('|')[1]
+    cb_data = callback_query.data
     msg = callback_query.message
     if cb_data == 's&m':
         await msg.edit(
             text='Please Choose',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='Split PDF', callback_data=f'slicer|{imgdir}')],
-                [InlineKeyboardButton(text='Merge PDF', callback_data=f'merger|{imgdir}')]
+                [InlineKeyboardButton(text='Split PDF', callback_data='slicer')],
+                [InlineKeyboardButton(text='Merge PDF', callback_data='merger')]
             ])
         )
     elif cb_data == 'pass':
         await msg.edit(
             text='Please Choose',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='encrypt', callback_data=f'encrypter|{imgdir}')],
-                [InlineKeyboardButton(text='decrypt', callback_data=f'decrypter|{imgdir}')]
+                [InlineKeyboardButton(text='encrypt', callback_data='encrypter')],
+                [InlineKeyboardButton(text='decrypt', callback_data='decrypter')]
             ])
         )
 
@@ -66,21 +72,32 @@ async def cb_(client, callback_query):
         await msg.edit(
             text='Please Select Compresssion Ratio',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='low', callback_data=f'low|{imgdir}')],
-                [InlineKeyboardButton(text='recommended', callback_data=f'medium|{imgdir}')],
-                [InlineKeyboardButton(text='high', callback_data=f'high|{imgdir}')]
+                [InlineKeyboardButton(text='low', callback_data='low')],
+                [InlineKeyboardButton(text='recommended', callback_data='medium')],
+                [InlineKeyboardButton(text='high', callback_data='high')]
             ])
         )
-    elif cb_data == 'slicer':
-        await msg.edit(
-            text='working'
-        )
-        # print(callback_query)
-        await pdf_silcer(imgdir, int(callback_query.message.chat.id),
-                         client, msg, str(callback_query.message.message_id))
-        await asyncio.sleep(2)
-        await msg.delete()
     elif cb_data == 'decrypter':
         await msg.edit(
-            text='Send the password as a reply to this message'
+            text=Phrase.DECRYPT_GUIDE
+
         )
+    elif cb_data == 'encrypter':
+        await msg.edit(
+            text=Phrase.ENCRYPT_GUIDE
+        )
+    elif cb_data == 'low':
+        await msg.edit(
+            text=Phrase.COMPRESS_LOW
+        )
+    elif cb_data == 'medium':
+        await msg.edit(
+            text=Phrase.COMPRESS_MEDIUM
+        )
+    elif cb_data == 'high':
+        await msg.edit(
+            text=Phrase.COMPRESS_HIGH
+        )
+        # print(callback_query)
+        # await pdf_silcer(imgdir, int(callback_query.message.chat.id),
+        #                 client, msg, str(callback_query.message.message_id))
