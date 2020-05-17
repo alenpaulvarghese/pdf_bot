@@ -79,5 +79,10 @@ async def cb_(client,callback_query):
         )
         #print(callback_query)
         await pdf_silcer(imgdir, int(callback_query.message.chat.id), client, msg, str(callback_query.message.message_id))
-        await asyncio.sleep(4)
+        await asyncio.sleep(2)
         await msg.delete()
+        
+    elif cb_data == 'decrypter':
+        await msg.edit(
+            text='Send the password as a reply to this message'
+        )

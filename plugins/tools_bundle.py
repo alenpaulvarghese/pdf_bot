@@ -1,4 +1,5 @@
 from pikepdf import Pdf , PdfError
+import subprocess
 import asyncio
 import os 
 
@@ -21,4 +22,13 @@ async def pdf_silcer(location,message_id,client,msg,naming):
                 )
                 os.remove(location)
         os.chdir(current_directory)
-        await msg.edit(text=f'Successfully Uploaded {int(n)+1} files')
+        await msg.reply(text=f'Successfully Uploaded {int(n)+1} files')
+
+
+async def is_encrypted(file_name):
+    p1 = subprocess.run(['qpdf','--is-encrypted',f'{file_name}'])
+    print(p1.returncode)
+
+async def decrypter(file_name,password):
+    final_name = os.path.splitext(file_name)[0]
+    subprocess.run(['qpdf',f'--password={password}','--decrypt',f'{file_name}',f'{final_name}-decrypted.pdf'])
