@@ -20,9 +20,9 @@ async def downloader(client,message):
     if message.document.mime_type == "application/pdf":
         #Download and storing file
         location = "./FILES" + "/" + str(message.chat.id)
-        imgdir =  location + "/" + "input.pdf"
         if not os.path.isdir(location):
             os.mkdir(location)
+        imgdir =  location + "/" + message.document.file_name
         dwn = await message.reply_text("Downloading...", quote=True)
         await client.download_media(
             message=message,
@@ -77,7 +77,7 @@ async def cb_(client,callback_query):
         await msg.edit(
             text='working'
         )
-        print(callback_query.message.chat.id)
         #print(callback_query)
-        await pdf_silcer(imgdir, int(callback_query.message.chat.id), client)
+        await pdf_silcer(imgdir, int(callback_query.message.chat.id), client, msg, str(callback_query.message.message_id))
+        await asyncio.sleep(4)
         await msg.delete()
