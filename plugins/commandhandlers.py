@@ -1,4 +1,5 @@
 from pyrogram import Client,Filters,InlineKeyboardButton,InlineKeyboardMarkup
+from plugins.tools_bundle import pdf_silcer
 import asyncio
 import os 
 
@@ -6,7 +7,7 @@ import os
 async def start(client,message):
     await client.send_message(
         chat_id=message.chat.id,
-        text='Choose',
+        text=f'{message.chat.id}',
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton(text='decrypt',callback_data='decrypter')]
         ])
@@ -53,6 +54,7 @@ async def cb_(client,callback_query):
                 [InlineKeyboardButton(text='Merge PDF',callback_data=f'merger|{imgdir}')]
             ])
         )
+        
     elif cb_data == 'pass':
         await msg.edit(
             text='Please Choose',
@@ -61,6 +63,7 @@ async def cb_(client,callback_query):
                 [InlineKeyboardButton(text='decrypt',callback_data=f'decrypter|{imgdir}')]
             ])
         )
+
     elif cb_data == 'compress':
         await msg.edit(
             text='Please Select Compresssion Ratio',
@@ -70,4 +73,11 @@ async def cb_(client,callback_query):
                 [InlineKeyboardButton(text='high',callback_data=f'high|{imgdir}')]
             ])
         )
-    
+    elif cb_data == 'slicer':
+        await msg.edit(
+            text='working'
+        )
+        print(callback_query.message.chat.id)
+        #print(callback_query)
+        await pdf_silcer(imgdir, int(callback_query.message.chat.id), client)
+        await msg.delete()
