@@ -127,10 +127,13 @@ async def decrypter(client, message):
                 )
             )
             return
+        dwn = await message.reply_text("Downloading...", quote=True)
         filename = await downloader(
-            message.reply_to_message.chat.id, 
+            message.reply_to_message,
             message.reply_to_message.document.file_name,
-            message,
             client
             )
-        print(msg)
+        await dwn.edit(text='Succefully Downloaded...')
+        await asyncio.sleep(1.5)
+        await decrypter(filename, password)
+        

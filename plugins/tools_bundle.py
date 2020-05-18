@@ -37,19 +37,18 @@ async def is_encrypted(file_name):
         return False
 
 
-async def downloader(chat_id, document_name, message, client):
+async def downloader(chat_id, document_name, client):
     if not os.path.isdir('./FILES'):
         os.mkdir('./FILES')
-    location = "./FILES" + "/" + str(chat_id)
+    location = "./FILES" + "/" + str(chat_id.chat.id)
     if not os.path.isdir(location):
         os.mkdir(location)
     pdfdir = location + "/" + document_name
-    #dwn = await message.reply_text("Downloading...", quote=True)
     await client.download_media(
-        message=message,
+        message=chat_id,
         file_name=pdfdir
     )
-    return pdfdir, dwn
+    return pdfdir
 
 
 async def decrypter(file_name, password,):
