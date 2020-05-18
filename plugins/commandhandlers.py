@@ -1,5 +1,5 @@
 from pyrogram import Client, Filters, InlineKeyboardButton, InlineKeyboardMarkup
-from plugins.tools_bundle import pdf_silcer, is_encrypted , downloader
+from plugins.tools_bundle import pdf_silcer, is_encrypted, downloader, decrypter
 from plugins.pdfbot_locale import Phrase
 import asyncio
 import os
@@ -103,7 +103,7 @@ async def cb_(client, callback_query):
 
 
 @Client.on_message(Filters.command(["decrypt"]))
-async def decrypter(client, message):
+async def decrypter_cmd(client, message):
     # https://github.com/SpEcHiDe/AnyDLBot/blob/f112fc1e7ca72a6327fc0db68c049b096a588dac/plugins/rename_file.py#L45
     if (" " in message.text) and (message.reply_to_message is not None):
         cmd, password = message.text.split(" ", 1)
@@ -128,12 +128,25 @@ async def decrypter(client, message):
             )
             return
         dwn = await message.reply_text("Downloading...", quote=True)
-        filename = await downloader(
+        filename, location = await downloader(
             message.reply_to_message,
             message.reply_to_message.document.file_name,
             client
             )
         await dwn.edit(text='Succefully Downloaded...')
         await asyncio.sleep(1.5)
-        await decrypter(filename, password)
-        
+        await dwn.edit(text='Decrypting...')
+        password_is_wrong, final_name = await decrypter(filename, password, location, message.message_id)
+        if password_is_wrong:
+            await dwn.edit(text=final_name)
+            return
+        if not password_is_wrong:
+            await dwn.edit(text='Uploading...')
+            await client.send_document(
+                document=final_name,
+                chat_id=message.chat.id
+            )
+            await dwn.edit('Succefully Uploaded')
+            await asyncio.sleep(5)
+            await dwn.delete()
+        os.remove(final_name)

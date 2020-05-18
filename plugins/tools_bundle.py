@@ -48,15 +48,20 @@ async def downloader(chat_id, document_name, client):
         message=chat_id,
         file_name=pdfdir
     )
-    return pdfdir
+    return pdfdir, location
 
 
-async def decrypter(file_name, password,):
-    current_directory = os.getcwd()
-    os.chdir(f'./FILES/{message_id}/')
-    final_name = os.path.splitext(file_name)[0]
-    final_name = f'{final_name}-decrypted.pdf'
-    subprocess.run(['qpdf', f'--password={password}', '--decrypt',
-                   f'{file_name}', final_name])
-    os.chdir(current_directory)
-    return final_name
+async def decrypter(file_name, password, location, id_for_naming):
+    if await is_encrypted(file_name):
+        final_name = os.path.splitext(file_name)[0]
+        final_name = f'{final_name}-{id_for_naming}-decrypted.pdf'
+        p1 = subprocess.run(['qpdf', f'--password={password}', '--decrypt',
+                            f'{file_name}', final_name])
+        os.remove(file_name)
+        if p1.returncode != 0:
+            return True, 'Worng Password'
+        else:
+            return False, final_name
+    else:
+        os.remove(file_name)
+        return True, 'The file has no protection'
