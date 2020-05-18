@@ -37,7 +37,27 @@ async def is_encrypted(file_name):
         return False
 
 
-async def decrypter(file_name, password):
+async def downloader(chat_id, document_name, message, client):
+    if not os.path.isdir('./FILES'):
+        os.mkdir('./FILES')
+    location = "./FILES" + "/" + str(chat_id)
+    if not os.path.isdir(location):
+        os.mkdir(location)
+    pdfdir = location + "/" + document_name
+    #dwn = await message.reply_text("Downloading...", quote=True)
+    await client.download_media(
+        message=message,
+        file_name=pdfdir
+    )
+    return pdfdir, dwn
+
+
+async def decrypter(file_name, password,):
+    current_directory = os.getcwd()
+    os.chdir(f'./FILES/{message_id}/')
     final_name = os.path.splitext(file_name)[0]
+    final_name = f'{final_name}-decrypted.pdf'
     subprocess.run(['qpdf', f'--password={password}', '--decrypt',
-                   f'{file_name}', f'{final_name}-decrypted.pdf'])
+                   f'{file_name}', final_name])
+    os.chdir(current_directory)
+    return final_name
