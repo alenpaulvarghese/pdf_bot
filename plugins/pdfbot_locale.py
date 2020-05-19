@@ -18,3 +18,6 @@ class Phrase(object):
     LONG_PASSWORD = 'Soory the password limit is 60 character. The given password is {num} character'
     NO_REPLIED_MEDIA = 'Please reply to a PDF to {method} it'
     NOT_PDF = "Soory this media is not a PDF"
+    MERGE_HIGH = 'Soory the merge limit is 10 PDF. The given amount is {num} pdf'
+    MERGE_LOW = 'Soory you at least need 2 PDF to merge'
+    MERGE_NO = "You didn't specified any number of files to merge"
