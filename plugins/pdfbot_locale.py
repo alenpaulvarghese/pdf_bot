@@ -22,4 +22,8 @@ class Phrase(object):
     MERGE_LOW = 'Soory you at least need 2 PDF to merge'
     MERGE_NO = "You didn't specified any number of files to merge"
     MERGE_APPROVE = "<b>The following {num} PDF are going to be merged in the given order</b>\n\n"
-    MERGE_MESSAGE = "<b>{num}.</b>  <code>{filename}</code>\n"
+    MERGE_MESSAGE = "<b>{num}.</b>  <code>{filename}</code>\n" 
+    MERGE_CORRUPT = "The following file is corrupted or not a valid PDF file\n\n<code>{issue_with}</code>"
+    INVALID_PASSWORD = "The following file is encrypted please use <b><code>/decrypt</code></b> command to decrypt the file\n\n<code>{issue_with}</code>"
+
+    MERGE_ERR_LOG = "{time}\n\n issue: {issue}\n\n"

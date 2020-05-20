@@ -1,4 +1,6 @@
 from pikepdf import Pdf, PdfError, PasswordError
+from plugins.pdfbot_locale import Phrase
+from datetime import datetime
 import subprocess
 import asyncio
 import os
@@ -67,12 +69,22 @@ async def decrypter(file_name, password, location, id_for_naming):
         return True, 'The file has no protection'
 
 
-async def merger(file_name, id_for_naming):
+async def merger(file_name, id_for_naming, location):
     merged_pdf = Pdf.new()
     for file in file_name:
-        with Pdf.open(file, 'rb') as src:
-            merged_pdf.pages.extend(src.pages)
+        try:
+            with Pdf.open(file, 'rb') as src:
+                merged_pdf.pages.extend(src.pages)
+        except PasswordError as e:
+            return False, Phrase.INVALID_PASSWORD.format(issue_with=file.split("/")[-1])
+        except Exception as e:
+            with open("error_logging.txt", "at") as err_logger:
+                err_logger.write(Phrase.MERGE_ERR_LOG.format(
+                    time=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                    issue=e
+                ))
+            return False, Phrase.MERGE_CORRUPT.format(issue_with=file.split("/")[-1])
     merged_pdf.remove_unreferenced_resources()
-    merge_file_location = f'merged-{id_for_naming}.pdf'
+    merge_file_location = os.path.join(location, f'merged-{id_for_naming}.pdf')
     merged_pdf.save(merge_file_location)
-    return merge_file_location
+    return True, merge_file_location

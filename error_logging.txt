@@ -1,0 +1,16 @@
+05/20/2020, 23:43:19
+
+ issue: ./FILES/584512526/1576042998.pdf: unable to find trailer dictionary while recovering damaged file
+ 
+05/20/2020, 23:45:20
+
+ issue: ./FILES/584512526/1576042998.pdf: unable to find trailer dictionary while recovering damaged file
+
+05/20/2020, 23:46:36
+
+ issue: ./FILES/584512526/1576042998.pdf: unable to find trailer dictionary while recovering damaged file
+
+05/20/2020, 23:49:10
+
+ issue: ./FILES/584512526/1576042998.pdf: unable to find trailer dictionary while recovering damaged file
+
