@@ -21,3 +21,5 @@ class Phrase(object):
     MERGE_HIGH = 'Soory the merge limit is 10 PDF. The given amount is {num} pdf'
     MERGE_LOW = 'Soory you at least need 2 PDF to merge'
     MERGE_NO = "You didn't specified any number of files to merge"
+    MERGE_APPROVE = "<b>The following {num} PDF are going to be merged in the given order</b>\n\n"
+    MERGE_MESSAGE = "<b>{num}.</b>  <code>{filename}</code>\n"

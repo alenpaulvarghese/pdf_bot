@@ -65,3 +65,14 @@ async def decrypter(file_name, password, location, id_for_naming):
     else:
         os.remove(file_name)
         return True, 'The file has no protection'
+
+
+async def merger(file_name, id_for_naming):
+    merged_pdf = Pdf.new()
+    for file in file_name:
+        with Pdf.open(file, 'rb') as src:
+            merged_pdf.pages.extend(src.pages)
+    merged_pdf.remove_unreferenced_resources()
+    merge_file_location = f'merged-{id_for_naming}.pdf'
+    merged_pdf.save(merge_file_location)
+    return merge_file_location

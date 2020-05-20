@@ -1,6 +1,6 @@
 from pyrogram import Client, Filters
 from plugins.pdfbot_locale import Phrase
-from plugins.tools_bundle import is_encrypted, downloader
+from plugins.tools_bundle import is_encrypted, downloader, merger
 import os
 import asyncio
 
@@ -32,7 +32,22 @@ async def merger_cb(client, message):
                 continue
             pdf_file_ids.append(pdf)
             merge_amount -= 1
+        for_callback_filename = [Phrase.MERGE_APPROVE.format(
+            num=len(pdf_file_ids)
+            )]
         pdf_file_ids.reverse()
+        for numbering, making_message in enumerate(pdf_file_ids):
+            for_callback_filename.append(
+               Phrase.MERGE_MESSAGE.format(
+                    num=str(numbering+1),
+                    filename=making_message.document.file_name
+                    )
+                )
+        # https://stackoverflow.com/a/5618893/13033981
+        output_message_final = ''.join(str(e) for e in for_callback_filename)
+        await random_message.edit(text=output_message_final)
+        print(output_message_final)
+        await asyncio.sleep(3)
         file_names = []
         for number, files_in_this_list in enumerate(pdf_file_ids):
             await random_message.edit(
@@ -46,7 +61,14 @@ async def merger_cb(client, message):
             )
             file_names.append(filename)
         await random_message.edit(text='Download Finished')
-        print(file_names)
+        await random_message.edit(text='merging..')
+        merged_file_name = await merger(
+            file_names,
+            message.message_id
+        )
+        await client.send_document(
+            document=merged_file_name,
+            chat_id=message.chat.id
+        )
     else:
         await message.reply_text(text=Phrase.MERGE_NO)
-
