@@ -120,13 +120,6 @@ async def decrypter_cmd(client, message):
                 )
             )
             return
-        elif message.reply_to_message is None:
-            await message.reply_text(
-                Phrase.NO_REPLIED_MEDIA.format(
-                    method='decrypt'
-                )
-            )
-            return
         dwn = await message.reply_text("Downloading...", quote=True)
         filename, location = await downloader(
             message.reply_to_message,
@@ -155,3 +148,13 @@ async def decrypter_cmd(client, message):
             await asyncio.sleep(5)
             await dwn.delete()
         os.remove(final_name)
+    elif message.reply_to_message is None:
+        await message.reply_text(
+            Phrase.NO_REPLIED_MEDIA.format(
+                method='decrypt'
+            )
+        )
+        return
+    elif (" " not in message.text):
+        await message.reply_text(Phrase.DECRYPT_NO)
+        return

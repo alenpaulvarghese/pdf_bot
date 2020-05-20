@@ -21,9 +21,14 @@ class Phrase(object):
     MERGE_HIGH = 'Soory the merge limit is 10 PDF. The given amount is {num} pdf'
     MERGE_LOW = 'Soory you at least need 2 PDF to merge'
     MERGE_NO = "You didn't specified any number of files to merge"
+    MERGE_NO_PDF = "Soory I couldn't find any PDF files.\nPlease checkout the guide to find how to merge PDF"
     MERGE_APPROVE = "<b>The following {num} PDF are going to be merged in the given order</b>\n\n"
     MERGE_MESSAGE = "<b>{num}.</b>  <code>{filename}</code>\n" 
     MERGE_CORRUPT = "The following file is corrupted or not a valid PDF file\n\n<code>{issue_with}</code>"
     INVALID_PASSWORD = "The following file is encrypted please use <b><code>/decrypt</code></b> command to decrypt the file\n\n<code>{issue_with}</code>"
-
     MERGE_ERR_LOG = "{time}\n\n issue: {issue}\n\n"
+    INT_NOT_STR = "merge command is expecting a number not any other values"
+    # https://github.com/SpEcHiDe/AnyDLBot/blob/f112fc1e7ca72a6327fc0db68c049b096a588dac/translation.py#L73
+    RENAME_LONG_NAME = "File Name limit allowed by Telegram is 64 characters.The given file name has {num} characters.\n\n<b>Essays are not allowed in Telegram file name!\n\n</b>Please short your file name and try again!"
+    RENAME_NO = "You didn't specified any name to rename"
+    DECRYPT_NO = "You didn't specifies any password to decrypt"

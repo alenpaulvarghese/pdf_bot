@@ -7,33 +7,45 @@ import asyncio
 
 @Client.on_message(Filters.command(["merge"]))
 async def merger_cb(client, message):
-    # print(pdf)
     if (" " in message.text):
         cmd, merge_amount = message.text.split(" ", 1)
-
-        if int(merge_amount) > 10:
-            await message.reply_text(
-                Phrase.MERGE_HIGH.format(
-                    num=merge_amount
+        try:
+            if int(merge_amount) > 10:
+                await message.reply_text(
+                    Phrase.MERGE_HIGH.format(
+                        num=merge_amount
+                    )
                 )
-            )
-            return
+                return
+            elif int(merge_amount) <= 1:
+                await message.reply_text(text=Phrase.MERGE_LOW)
+                return
+        except ValueError:
+            await message.reply_text(text=Phrase.INT_NOT_STR)
+            return 
         pdf_file_ids = []
         current_message_id = int(message.message_id)
         merge_amount = int(merge_amount)
-        x = 1
+        x, y = 1, 4
         random_message = await message.reply_text(text='Processing...')
-        while x < merge_amount+1:
+        # complexity starting
+        while x < merge_amount+1 and y > 0:
             current_message_id -= 1
             pdf = await client.get_messages(message.chat.id, current_message_id)
             if (pdf.empty or pdf.from_user.is_self
                     or pdf.document is None
                     or pdf.document.mime_type != "application/pdf"):
+                if not pdf.empty and not pdf.from_user.is_self:
+                    y -= 1
                 x -= 1
                 merge_amount -= 1
                 continue
             pdf_file_ids.append(pdf)
             merge_amount -= 1
+        # complexity finished
+        if len(pdf_file_ids) <= 1:
+            await random_message.edit(text=Phrase.MERGE_NO_PDF)
+            return
         for_callback_filename = [Phrase.MERGE_APPROVE.format(
             num=len(pdf_file_ids)
             )]
