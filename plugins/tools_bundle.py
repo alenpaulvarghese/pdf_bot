@@ -53,6 +53,29 @@ async def downloader(chat_id, document_name, client):
     return pdfdir, location
 
 
+async def encrypter(file_name, password, location, id_for_naming):
+    if not await is_encrypted(file_name):
+        print(file_name)
+        final_name = os.path.splitext(file_name)[0]
+        final_name = f'{final_name}-{id_for_naming}-encrypted.pdf'
+        p1 = subprocess.run(['qpdf',
+                            '--encrypt',
+                             f'{password}', f'{password}',
+                             '128', '--',
+                             f'{file_name}', f'{final_name}'],
+                            )
+        os.remove(file_name)
+        if p1.returncode == 0:
+            return False, final_name
+        elif p1.returncode == 2:
+            return True, Phrase.MAIN_CORRUPT
+        else:
+            return True, Phrase.WENT_WRONG
+    else:
+        os.remove(file_name)
+        return True, "The Given file is already encrypted"
+
+
 async def decrypter(file_name, password, location, id_for_naming):
     if await is_encrypted(file_name):
         final_name = os.path.splitext(file_name)[0]

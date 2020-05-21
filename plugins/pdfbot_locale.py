@@ -31,4 +31,7 @@ class Phrase(object):
     # https://github.com/SpEcHiDe/AnyDLBot/blob/f112fc1e7ca72a6327fc0db68c049b096a588dac/translation.py#L73
     RENAME_LONG_NAME = "File Name limit allowed by Telegram is 64 characters.The given file name has {num} characters.\n\n<b>Essays are not allowed in Telegram file name!\n\n</b>Please short your file name and try again!"
     RENAME_NO = "You didn't specified any name to rename"
-    DECRYPT_NO = "You didn't specifies any password to decrypt"
+    DECRYPT_NO = "You didn't specified any password to decrypt"
+    ENCRYPT_NO = "You didn't specified any password to encrypt"
+    MAIN_CORRUPT = "Soory the given file is corrupted or either invalid"
+    WENT_WRONG = "soory something went wrong"

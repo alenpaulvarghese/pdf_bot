@@ -5,7 +5,7 @@ import os
 import asyncio
 
 
-@Client.on_message(Filters.command(["rename"]))
+@Client.on_message(Filters.command(["rename"]) & ~Filters.edited)
 async def rename_cb(client, message):
     if (" " in message.text) and (message.reply_to_message is not None):
         cmd, file_rename_name = message.text.split(" ", 1)
