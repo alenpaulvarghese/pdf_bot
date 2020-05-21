@@ -1,6 +1,7 @@
 from pikepdf import Pdf, PdfError, PasswordError
+from pylovepdf.tools.compress import Compress
 from plugins.pdfbot_locale import Phrase
-from datetime import datetime
+from datetime import datetime, date
 import subprocess
 import os
 
@@ -110,3 +111,31 @@ async def merger(file_name, id_for_naming, location):
     merge_file_location = os.path.join(location, f'merged-{id_for_naming}.pdf')
     merged_pdf.save(merge_file_location)
     return True, merge_file_location
+
+
+async def compressor(compression_ratio, location, file_name):
+    try:
+        #os.environ.get(COMPRESS_API)
+        API_PDF = 'project_public_b5530332283b096e921c0e6e8df8a12a_1HzdL6b2fc4ee89ae7031bb53977e325c2df3'
+    except Exception:
+        print('API FOR COMPRESSION NOT FOUND')
+        return False, 'compression is unavailable currently'
+    try:
+        t = Compress(API_PDF, verify_ssl=True, proxies=False)
+        t.add_file(file_name)
+        t.debug = False
+        t.compression_level = compression_ratio
+        t.set_output_folder(location)
+        t.execute()
+        t.download()
+        t.delete_current_task()
+        tday = date.today().strftime("%d-%m-%Y")
+        return True, f'{location}/compress_{tday}.pdf'
+        await client.send_document(
+            document=f'{location}/compress_{tday}.pdf',
+            chat_id=callback_query.message.chat.id,
+            caption = "Compressed PDF"
+        )
+    except Exception as e:
+        print(e)
+        return False, 'Error occured while compressing'

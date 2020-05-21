@@ -4,13 +4,16 @@ from pyrogram import InlineKeyboardButton, InlineKeyboardMarkup
 class Phrase(object):
     DECRYPT_GUIDE = '<b>Decrypt PDF using the following method</b>\n1. send the pdf file\n2. send the following command as a reply to the pdf file\n<code>/decrypt "passphrase"</code>'
     ENCRYPT_GUIDE = '<b>Encrypt PDF using the following method</b>\n1. send the pdf file\n2. send the following command as a reply to the pdf file\n<code>/encrypt "passphrase"</code>'
-    COMPRESS_LOW = '<b>Compress PDF using the following method</b>\n[COMPRESSION RATIO : LOW]\n1. send the pdf file\n2. send the following command as a reply to the pdf file\n<code>/compress low</code>'
-    COMPRESS_MEDIUM = '<b>Compress PDF using the following method</b>\n[COMPRESSION RATIO : MEDIUM]\n1. send the pdf file\n2. send the following command as a reply to the pdf file\n<code>/compress medium</code>'
-    COMPRESS_HIGH = '<b>Compress PDF using the following method</b>\n[COMPRESSION RATIO : HIGH]\n1. send the pdf file\n2. send the following command as a reply to the pdf file\n<code>/compress high</code>'
     HOME_NAV = InlineKeyboardMarkup([
                     [InlineKeyboardButton(text='Compress', callback_data='compress')],
                     [InlineKeyboardButton(text='Split and Merge', callback_data='s&m')],
                     [InlineKeyboardButton(text='PDF Protections', callback_data='pass')],
+                ])
+    COMPRESS_NAV = InlineKeyboardMarkup([
+                 [InlineKeyboardButton(text='low', callback_data='low')],
+                 [InlineKeyboardButton(text='recommended', callback_data='recommended')],
+                 [InlineKeyboardButton(text='high', callback_data='extreme')],
+                 [InlineKeyboardButton(text='cancel', callback_data='cancel')]
                 ])
     BACK_MARKUP = InlineKeyboardMarkup([
         [InlineKeyboardButton(text='back', callback_data='back')]
