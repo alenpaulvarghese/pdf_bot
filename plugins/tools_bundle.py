@@ -2,7 +2,6 @@ from pikepdf import Pdf, PdfError, PasswordError
 from plugins.pdfbot_locale import Phrase
 from datetime import datetime
 import subprocess
-import asyncio
 import os
 
 
@@ -42,9 +41,9 @@ async def is_encrypted(file_name):
 async def downloader(chat_id, document_name, client):
     if not os.path.isdir('./FILES'):
         os.mkdir('./FILES')
-    location = "./FILES" + "/" + str(chat_id.chat.id)
+    location = f"./FILES/{str(chat_id.chat.id)}/{str(chat_id.message_id)}"
     if not os.path.isdir(location):
-        os.mkdir(location)
+        os.makedirs(location)
     pdfdir = location + "/" + document_name
     await client.download_media(
         message=chat_id,

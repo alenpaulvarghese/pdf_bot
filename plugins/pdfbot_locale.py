@@ -35,3 +35,4 @@ class Phrase(object):
     ENCRYPT_NO = "You didn't specified any password to encrypt"
     MAIN_CORRUPT = "Soory the given file is corrupted or either invalid"
     WENT_WRONG = "soory something went wrong"
+    LOCATION = "./FILES/{loc}"

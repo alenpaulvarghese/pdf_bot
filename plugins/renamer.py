@@ -1,7 +1,7 @@
 from pyrogram import Client, Filters
 from plugins.pdfbot_locale import Phrase
 from plugins.tools_bundle import downloader
-import os
+import shutil
 import asyncio
 
 
@@ -39,8 +39,8 @@ async def rename_cb(client, message):
             document=filename,
             chat_id=message.chat.id
         )
-        await asyncio.sleep(4)
-        os.remove(filename)
+        await asyncio.sleep(5)
+        shutil.rmtree(Phrase.LOCATION.format(loc=message.chat.id))
         await random_message.delete()
     elif message.reply_to_message is None:
         await message.reply_text(

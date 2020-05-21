@@ -1,7 +1,7 @@
 from pyrogram import Client, Filters
 from plugins.pdfbot_locale import Phrase
 from plugins.tools_bundle import is_encrypted, downloader, merger
-import os
+import shutil
 import asyncio
 
 
@@ -86,15 +86,13 @@ async def merger_cb(client, message):
                 document=merged_file_name,
                 chat_id=message.chat.id
             )
-            await asyncio.sleep(4)
-            os.remove(merged_file_name)
+            await asyncio.sleep(10)
+            try:
+                shutil.rmtree(Phrase.LOCATION.format(loc=message.chat.id))
+            except FileNotFoundError:
+                pass
             await random_message.delete()
         elif not boolean:
             await random_message.edit(text=merged_file_name)
-        for files in file_names:
-            try:
-                os.remove(files)
-            except FileNotFoundError as e:
-                pass
     else:
         await message.reply_text(text=Phrase.MERGE_NO)

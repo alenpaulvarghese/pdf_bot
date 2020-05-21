@@ -2,7 +2,7 @@ from pyrogram import Client, Filters
 from plugins.tools_bundle import downloader, decrypter
 from plugins.pdfbot_locale import Phrase
 import asyncio
-import os
+import shutil
 
 
 @Client.on_message(Filters.command(["decrypt"]) & ~Filters.edited)
@@ -51,7 +51,7 @@ async def decrypter_cmd(client, message):
             await dwn.edit('Succefully Uploaded')
             await asyncio.sleep(5)
             await dwn.delete()
-        os.remove(final_name)
+        shutil.rmtree(Phrase.LOCATION.format(loc=message.chat.id))
     elif message.reply_to_message is None:
         await message.reply_text(
             Phrase.NO_REPLIED_MEDIA.format(
