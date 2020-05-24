@@ -4,7 +4,7 @@ from plugins.pdfbot_locale import Phrase
 from datetime import datetime, date
 import subprocess
 import os
-
+import asyncio
 
 async def pdf_silcer(location, message_id, client, msg, naming):
     try:
@@ -139,3 +139,19 @@ async def compressor(compression_ratio, location, file_name):
     except Exception as e:
         print(e)
         return False, 'Error occured while compressing'
+
+async def get_image_page(pdf_file, out_file, page_num, method):
+    print(out_file)
+    page = str(page_num + 1)
+    command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r600x600", "-dPDFFitPage","-sOutputFile=" + out_file]
+    if method == 1:
+        command_to_exec.append("-dFirstPage=" + page)
+        command_to_exec.append("-dLastPage=" + page)
+        command_to_exec.append(pdf_file)
+    if method == 2:
+        command_to_exec.append(pdf_file)
+    process = await asyncio.create_subprocess_exec(
+        *command_to_exec)
+        # stdout must a pipe to be accessible as process.stdout
+    print(*command_to_exec)
+    return out_file

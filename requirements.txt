@@ -2,3 +2,4 @@ https://github.com/pyrogram/pyrogram/archive/asyncio.zip
 tgcrypto
 pikepdf
 pylovepdf
+ghostscript
