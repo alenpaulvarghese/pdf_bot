@@ -1,5 +1,6 @@
 from pikepdf import Pdf, PdfError, PasswordError
 from pylovepdf.tools.compress import Compress
+from pyrogram import InputMediaPhoto
 from plugins.pdfbot_locale import Phrase
 from datetime import datetime, date
 import subprocess
@@ -29,6 +30,11 @@ async def pdf_silcer(location, message_id, client, msg, naming):
     except PasswordError as e:
         await msg.edit('Please decrypt the PDF')
         await asyncio.sleep(10)
+
+
+async def page_no(input):
+    with Pdf.open(input, 'wb') as pdf:
+        return len(pdf.pages)
 
 
 async def is_encrypted(file_name):
@@ -134,24 +140,46 @@ async def compressor(compression_ratio, location, file_name):
         await client.send_document(
             document=f'{location}/compress_{tday}.pdf',
             chat_id=callback_query.message.chat.id,
-            caption = "Compressed PDF"
+            caption="Compressed PDF"
         )
     except Exception as e:
         print(e)
-        return False, 'Error occured while compressing'
+        return False, 'Error occured while coInputMediaPhotompressing'
 
-async def get_image_page(pdf_file, out_file, page_num, method):
-    print(out_file)
-    page = str(page_num + 1)
-    command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r600x600", "-dPDFFitPage","-sOutputFile=" + out_file]
-    if method == 1:
-        command_to_exec.append("-dFirstPage=" + page)
-        command_to_exec.append("-dLastPage=" + page)
-        command_to_exec.append(pdf_file)
-    if method == 2:
-        command_to_exec.append(pdf_file)
-    process = await asyncio.create_subprocess_exec(
-        *command_to_exec)
-        # stdout must a pipe to be accessible as process.stdout
-    print(*command_to_exec)
-    return out_file
+
+async def get_image_page(pdf_file, out_file, message_id, page_num):
+    command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r510x510", "-dPDFFitPage"]
+    total_pages = await page_no(pdf_file)
+    print(total_pages)
+    if type(page_num) == int:
+        if page_num > total_pages:
+            return False, Phrase.PAGES_HIGH
+        else:
+            extracted_file_location = out_file+'/extracted'+str(message_id)+'.jpeg'
+            command_to_exec.append("-sOutputFile=" + extracted_file_location)
+            command_to_exec.append("-dFirstPage=" + str(page_num))
+            command_to_exec.append("-dLastPage=" + str(page_num))
+            command_to_exec.append(pdf_file)
+            process = await asyncio.create_subprocess_exec(
+                *command_to_exec)
+            return True, extracted_file_location
+
+    elif type(page_num) == list:
+        start_page, end_page = page_num
+        
+
+    elif page_num is None:
+        list_to_upload = []
+        for page in range(total_pages):
+            command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r510x510", "-dPDFFitPage"]
+            extracted_file_location = out_file+'/extracted'+str(message_id)+'-'+str(page+1)+'.jpeg'
+            command_to_exec.append("-sOutputFile=" + extracted_file_location)
+            command_to_exec.append("-dFirstPage=" + str(page+1))
+            command_to_exec.append("-dLastPage=" + str(page+1))
+            command_to_exec.append(pdf_file)
+            process = await asyncio.create_subprocess_exec(
+                *command_to_exec)
+            list_to_upload.append(InputMediaPhoto(extracted_file_location))
+            print(list_to_upload)
+        await asyncio.sleep(2)
+        return True, list_to_upload

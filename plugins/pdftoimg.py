@@ -7,14 +7,37 @@ import shutil
 
 @Client.on_message(Filters.command(["extract"]) & ~Filters.edited)
 async def pdftoimg_cmd(client, message):
-    if (" " in message.text) and (message.reply_to_message is not None):
-        cmd, password = message.text.split(" ", 1)
+    if(message.reply_to_message is not None):
         if (message.reply_to_message.document is None or
                 message.reply_to_message.document.mime_type != "application/pdf"):
             await message.reply_text(
                 Phrase.NOT_PDF
             )
             return
+        if (" " in message.text):
+            cmd, page_no = message.text.split(" ", 1)
+            if('-' in page_no):
+                page_range = page_no.split("-", 1)
+                try:
+                    page_start = int(page_range[0])
+                    page_stop = int(page_range[1])
+                    page_no = [page_start, page_stop]
+                except ValueError:
+                    print('Raised Value Error')
+                    await message.reply_text(
+                        Phrase.WRONG_FORMAT
+                    )
+                    return
+            else:
+                try:
+                    page_no = int(page_no)
+                except ValueError:
+                    await message.reply_text(
+                        Phrase.WRONG_FORMAT
+                    )
+                    return
+        elif (" " not in message.text):
+            page_no = None
         dwn = await message.reply_text("Downloading...", quote=True)
         filename, location = await downloader(
             message.reply_to_message,
@@ -24,18 +47,31 @@ async def pdftoimg_cmd(client, message):
         await dwn.edit(text='Succefully Downloaded...')
         await asyncio.sleep(1.5)
         await dwn.edit(text='Extracting...')
-        output_file = await get_image_page(
+        success, output_file = await get_image_page(
             filename,
-            location+'/extracted'+str(message.message_id)+'.jpeg',
-            int(password),
-            1,
+            location,
+            message.message_id,
+            page_no,
         )
-        await asyncio.sleep(1.5)
-        await dwn.edit(text='Uploading...')
-        await client.send_photo(
-            photo=output_file,
-            chat_id=message.chat.id
-        )
+        await asyncio.sleep(2)
+        if not success:
+            await dwn.edit(text=output_file)
+            return
+        if success:
+            await dwn.edit(text='Uploading...')
+            while len(output_file) == 0:
+                first_10_file = output_file
+            if type(output_file) == list:
+                await client.send_media_group(
+                    media=output_file,
+                    chat_id=message.chat.id
+                )
+                await asyncio.sleep(2)
+            elif type(output_file) == str:
+                await client.send_photo(
+                        photo=output_file,
+                        chat_id=message.chat.id
+                    )
         await dwn.edit('Succefully Uploaded')
         await asyncio.sleep(5)
         await dwn.delete()
@@ -43,10 +79,7 @@ async def pdftoimg_cmd(client, message):
     elif message.reply_to_message is None:
         await message.reply_text(
             Phrase.NO_REPLIED_MEDIA.format(
-                method='extract'
+                method='convert pdf too image'
             )
         )
-        return
-    elif (" " not in message.text):
-        await message.reply_text(Phrase.DECRYPT_NO)
         return

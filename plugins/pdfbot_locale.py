@@ -19,6 +19,7 @@ class Phrase(object):
         [InlineKeyboardButton(text='back', callback_data='back')]
     ])
     LONG_PASSWORD = 'Soory the password limit is 60 character. The given password is {num} character'
+    WRONG_FORMAT = 'Soory this is not the correct format'
     NO_REPLIED_MEDIA = 'Please reply to a PDF to {method} it'
     NOT_PDF = "Soory this media is not a PDF"
     MERGE_HIGH = 'Soory the merge limit is 10 PDF. The given amount is {num} pdf'
@@ -37,5 +38,6 @@ class Phrase(object):
     DECRYPT_NO = "You didn't specified any password to decrypt"
     ENCRYPT_NO = "You didn't specified any password to encrypt"
     MAIN_CORRUPT = "Soory the given file is corrupted or either invalid"
+    PAGES_HIGH = "Soory the given range is higher than the actual page count"
     WENT_WRONG = "soory something went wrong"
     LOCATION = "./FILES/{loc}"
