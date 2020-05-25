@@ -59,14 +59,19 @@ async def pdftoimg_cmd(client, message):
             return
         if success:
             await dwn.edit(text='Uploading...')
-            while len(output_file) == 0:
-                first_10_file = output_file
             if type(output_file) == list:
-                await client.send_media_group(
-                    media=output_file,
-                    chat_id=message.chat.id
-                )
-                await asyncio.sleep(2)
+                sent_so_far = 0
+                while sent_so_far <= len(output_file):
+                    await client.send_chat_action(
+                        message.chat.id,
+                        "upload_photo"
+                        )
+                    await client.send_media_group(
+                        media=output_file[sent_so_far:sent_so_far+10],
+                        chat_id=message.chat.id
+                    )
+                    sent_so_far += 10
+                    await asyncio.sleep(2)
             elif type(output_file) == str:
                 await client.send_photo(
                         photo=output_file,
@@ -75,7 +80,7 @@ async def pdftoimg_cmd(client, message):
         await dwn.edit('Succefully Uploaded')
         await asyncio.sleep(5)
         await dwn.delete()
-        shutil.rmtree(Phrase.LOCATION.format(loc=message.chat.id))
+        #shutil.rmtree(Phrase.LOCATION.format(loc=message.chat.id))
     elif message.reply_to_message is None:
         await message.reply_text(
             Phrase.NO_REPLIED_MEDIA.format(

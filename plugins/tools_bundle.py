@@ -148,13 +148,13 @@ async def compressor(compression_ratio, location, file_name):
 
 
 async def get_image_page(pdf_file, out_file, message_id, page_num):
-    command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r510x510", "-dPDFFitPage"]
     total_pages = await page_no(pdf_file)
     print(total_pages)
     if type(page_num) == int:
         if page_num > total_pages:
             return False, Phrase.PAGES_HIGH
         else:
+            command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r510x510", "-dPDFFitPage"]
             extracted_file_location = out_file+'/extracted'+str(message_id)+'.jpeg'
             command_to_exec.append("-sOutputFile=" + extracted_file_location)
             command_to_exec.append("-dFirstPage=" + str(page_num))
@@ -165,8 +165,27 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
             return True, extracted_file_location
 
     elif type(page_num) == list:
-        start_page, end_page = page_num
-        
+        start_page = page_num[0]
+        end_page = page_num[1]
+        list_to_upload = []
+        if start_page <= total_pages and end_page >= start_page and end_page <= total_pages:
+            for i in range(start_page, end_page+1):
+                print(i)
+                command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r510x510", "-dPDFFitPage"]
+                extracted_file_location = out_file+'/extracted-'+str(message_id)+'-'+str(i)+'.jpeg'
+                command_to_exec.append("-sOutputFile=" + extracted_file_location)
+                command_to_exec.append("-dFirstPage=" + str(i))
+                command_to_exec.append("-dLastPage=" + str(i))
+                command_to_exec.append(pdf_file)
+                print(command_to_exec)
+                process = await asyncio.create_subprocess_exec(
+                    *command_to_exec)
+                await process.communicate()
+                list_to_upload.append(InputMediaPhoto(extracted_file_location))
+            await asyncio.sleep(2)
+            return True, list_to_upload
+        else:
+            return False, 'out of range'
 
     elif page_num is None:
         list_to_upload = []
@@ -179,7 +198,8 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
             command_to_exec.append(pdf_file)
             process = await asyncio.create_subprocess_exec(
                 *command_to_exec)
+            await process.communicate()
             list_to_upload.append(InputMediaPhoto(extracted_file_location))
-            print(list_to_upload)
+
         await asyncio.sleep(2)
         return True, list_to_upload
