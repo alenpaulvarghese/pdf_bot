@@ -33,8 +33,13 @@ async def pdf_silcer(location, message_id, client, msg, naming):
 
 
 async def page_no(input):
-    with Pdf.open(input, 'wb') as pdf:
-        return len(pdf.pages)
+    try:
+        with Pdf.open(input, 'wb') as pdf:
+            return len(pdf.pages)
+    except PasswordError:
+        return "Soory the file is encrypted"
+    except PdfError:
+        return "The File is corrupted"
 
 
 async def is_encrypted(file_name):
@@ -90,7 +95,7 @@ async def decrypter(file_name, password, location, id_for_naming):
                             f'{file_name}', final_name])
         os.remove(file_name)
         if p1.returncode != 0:
-            return True, 'Worng Password'
+            return True, 'Wrong Password'
         else:
             return False, final_name
     else:
@@ -143,12 +148,18 @@ async def compressor(compression_ratio, location, file_name):
             caption="Compressed PDF"
         )
     except Exception as e:
-        print(e)
-        return False, 'Error occured while coInputMediaPhotompressing'
+        with open("error_logging.txt", "at") as err_logger:
+                err_logger.write(Phrase.MERGE_ERR_LOG.format(
+                    time=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                    issue=e
+                ))
+        return False, 'Error occured while compressing'
 
 
 async def get_image_page(pdf_file, out_file, message_id, page_num):
     total_pages = await page_no(pdf_file)
+    if type(total_pages) != int:
+        return False, total_pages
     print(total_pages)
     if type(page_num) == int:
         if page_num > total_pages:

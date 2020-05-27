@@ -5,6 +5,17 @@ import asyncio
 import os
 import shutil
 
+
+@Client.on_message(Filters.command(["start"]))
+async def start(client, message):
+    await client.send_message(
+        chat_id=message.chat.id,
+        text="Consider this as a guide for using this bot",
+        reply_markup=Phrase.HOME_NAV,
+        reply_to_message_id=message.message_id
+    )
+
+
 @Client.on_callback_query()
 async def cb_(client, callback_query):
     cb_data = callback_query.data
@@ -36,6 +47,22 @@ async def cb_(client, callback_query):
         await msg.edit(
             text=Phrase.ENCRYPT_GUIDE,
             reply_markup=Phrase.BACK_MARKUP
+        )
+    elif cb_data == 'slicer':
+        await msg.edit(
+            text=Phrase.NOT_FILLED
+        )
+    elif cb_data == 'merger':
+        await msg.edit(
+            text=Phrase.NOT_FILLED
+        )
+    elif cb_data == 'compress':
+        await msg.edit(
+            text=Phrase.NOT_FILLED
+        )
+    elif cb_data == 'p2i':
+        await msg.edit(
+            text=Phrase.NOT_FILLED
         )
     elif (cb_data == 'low') or (cb_data == 'extreme') or (cb_data == 'recommended'):
         await callback_query.message.edit(

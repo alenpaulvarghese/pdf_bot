@@ -27,7 +27,7 @@ async def merger_cb(client, message):
         current_message_id = int(message.message_id)
         merge_amount = int(merge_amount)
         x, y = 1, 4
-        random_message = await message.reply_text(text='Processing...')
+        random_message = await message.reply_text(text='Searching...')
         # complexity starting
         while x < merge_amount+1 and y > 0:
             current_message_id -= 1
@@ -81,7 +81,8 @@ async def merger_cb(client, message):
             location
         )
         if boolean:
-            await random_message.edit(text='uploading..')
+            await random_message.delete()
+            random_message = await message.reply_text('Uploading..')
             await client.send_document(
                 document=merged_file_name,
                 chat_id=message.chat.id

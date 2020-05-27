@@ -21,6 +21,11 @@ async def pdftoimg_cmd(client, message):
                 try:
                     page_start = int(page_range[0])
                     page_stop = int(page_range[1])
+                    if page_start == 0 or page_stop == 0:
+                        await message.reply_text(
+                        Phrase.WRONG_FORMAT
+                        )
+                        return 
                     page_no = [page_start, page_stop]
                 except ValueError:
                     print('Raised Value Error')
@@ -31,6 +36,11 @@ async def pdftoimg_cmd(client, message):
             else:
                 try:
                     page_no = int(page_no)
+                    if page_no == 0:
+                        await message.reply_text(
+                        Phrase.WRONG_FORMAT
+                            )
+                        return 
                 except ValueError:
                     await message.reply_text(
                         Phrase.WRONG_FORMAT
@@ -77,10 +87,13 @@ async def pdftoimg_cmd(client, message):
                         photo=output_file,
                         chat_id=message.chat.id
                     )
-        await dwn.edit('Succefully Uploaded')
+            await dwn.edit('Succefully Uploaded')
         await asyncio.sleep(5)
         await dwn.delete()
-        #shutil.rmtree(Phrase.LOCATION.format(loc=message.chat.id))
+        try:
+            shutil.rmtree(Phrase.LOCATION.format(loc=message.chat.id))
+        except FileNotFoundError:
+            pass
     elif message.reply_to_message is None:
         await message.reply_text(
             Phrase.NO_REPLIED_MEDIA.format(

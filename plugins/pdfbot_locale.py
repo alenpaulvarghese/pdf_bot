@@ -8,6 +8,8 @@ class Phrase(object):
                     [InlineKeyboardButton(text='Compress', callback_data='compress')],
                     [InlineKeyboardButton(text='Split and Merge', callback_data='s&m')],
                     [InlineKeyboardButton(text='PDF Protections', callback_data='pass')],
+                    [InlineKeyboardButton(text='PDF To Image', callback_data='p2i')],
+                    [InlineKeyboardButton(text='cancel', callback_data='cancel')]
                 ])
     COMPRESS_NAV = InlineKeyboardMarkup([
                  [InlineKeyboardButton(text='low', callback_data='low')],
@@ -41,3 +43,4 @@ class Phrase(object):
     PAGES_HIGH = "Soory the given range is higher than the actual page count"
     WENT_WRONG = "soory something went wrong"
     LOCATION = "./FILES/{loc}"
+    NOT_FILLED = "This guide is not finished writing yet"
