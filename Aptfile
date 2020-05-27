@@ -1,4 +1,3 @@
-:repo:deb http://in.archive.ubuntu.com/ universe
-http://in.archive.ubuntu.com/pool/universe/q/qpdf/qpdf_9.1.1-1build1_amd64.deb
-http://in.archive.ubuntu.com/pool/universe/q/qpdf/libqpdf3_2.3.1-1_amd64.deb
-qpdf
+libtool
+gcc
+gcc-libs
