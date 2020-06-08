@@ -1,6 +1,6 @@
 from pyrogram import Client, Filters
 from plugins.pdfbot_locale import Phrase
-from plugins.tools_bundle import is_encrypted, downloader, merger
+from plugins.tools_bundle import is_encrypted, downloader, merger, progressor
 import shutil
 import asyncio
 
@@ -75,9 +75,10 @@ async def merger_cb(client, message):
             file_names.append(filename)
         await random_message.edit(text='Download Finished')
         await random_message.edit(text='merging..')
+        print(location)
         boolean, merged_file_name = await merger(
             file_names,
-            message.message_id,
+            str(message.message_id),
             location
         )
         if boolean:
@@ -85,8 +86,11 @@ async def merger_cb(client, message):
             random_message = await message.reply_text('Uploading..')
             await client.send_document(
                 document=merged_file_name,
-                chat_id=message.chat.id
+                chat_id=message.chat.id,
+                progress=progressor,
+                progress_args=(random_message, 'Uploading')
             )
+            await random_message.edit('<b>Succefully Uploaded</b>')
             await asyncio.sleep(10)
             try:
                 shutil.rmtree(Phrase.LOCATION.format(loc=message.chat.id))

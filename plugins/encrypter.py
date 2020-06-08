@@ -32,12 +32,11 @@ async def encrypter_cmd(client, message):
             )
         await dwn.edit(text='Succefully Downloaded...')
         await asyncio.sleep(1.5)
-        await dwn.edit(text='encrypting...') 
-        something_went_wrong, final_name = await encrypter(
+        await dwn.edit(text='encrypting...')
+        something_went_wrong, final_name = encrypter(
             filename,
             password,
-            location,
-            message.message_id
+            location
             )
         if something_went_wrong:
             await dwn.edit(text=final_name)

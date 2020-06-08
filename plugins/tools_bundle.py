@@ -7,6 +7,16 @@ import subprocess
 import os
 import asyncio
 
+
+async def progressor(current, total, message, random_string):
+    percentage = "{:.1f}%".format(current * 100 / total)
+    try:
+        await message.edit(text=random_string + '\n' + str(percentage))
+        await asyncio.sleep(0.5)
+    except:
+        pass
+
+
 async def pdf_silcer(location, message_id, client, msg, naming):
     try:
         with Pdf.open(location, 'wb') as pdf:
@@ -32,7 +42,7 @@ async def pdf_silcer(location, message_id, client, msg, naming):
         await asyncio.sleep(10)
 
 
-async def page_no(input):
+def page_no(input):
     try:
         with Pdf.open(input, 'wb') as pdf:
             return len(pdf.pages)
@@ -42,7 +52,7 @@ async def page_no(input):
         return "The File is corrupted"
 
 
-async def is_encrypted(file_name):
+def is_encrypted(file_name):
     p1 = subprocess.run(['qpdf', '--is-encrypted', f'{file_name}'])
     if p1.returncode == 0:
         return True
@@ -64,11 +74,11 @@ async def downloader(chat_id, document_name, client):
     return pdfdir, location
 
 
-async def encrypter(file_name, password, location, id_for_naming):
-    if not await is_encrypted(file_name):
+def encrypter(file_name, password, location):
+    if not is_encrypted(file_name):
         print(file_name)
         final_name = os.path.splitext(file_name)[0]
-        final_name = f'{final_name}-{id_for_naming}-encrypted.pdf'
+        final_name = f'{final_name}-encrypted.pdf'
         p1 = subprocess.run(['qpdf',
                             '--encrypt',
                              f'{password}', f'{password}',
@@ -87,8 +97,8 @@ async def encrypter(file_name, password, location, id_for_naming):
         return True, "The Given file is already encrypted"
 
 
-async def decrypter(file_name, password, location, id_for_naming):
-    if await is_encrypted(file_name):
+def decrypter(file_name, password, location, id_for_naming):
+    if is_encrypted(file_name):
         final_name = os.path.splitext(file_name)[0]
         final_name = f'{final_name}-{id_for_naming}-decrypted.pdf'
         p1 = subprocess.run(['qpdf', f'--password={password}', '--decrypt',
@@ -104,24 +114,26 @@ async def decrypter(file_name, password, location, id_for_naming):
 
 
 async def merger(file_name, id_for_naming, location):
-    merged_pdf = Pdf.new()
+    command_to_merge = ['qpdf', '--empty', '--pages']
     for file in file_name:
-        try:
-            with Pdf.open(file, 'rb') as src:
-                merged_pdf.pages.extend(src.pages)
-        except PasswordError as e:
+        if not is_encrypted(file):
+            command_to_merge.append(file)
+        else:
             return False, Phrase.INVALID_PASSWORD.format(issue_with=file.split("/")[-1])
-        except Exception as e:
-            with open("error_logging.txt", "at") as err_logger:
-                err_logger.write(Phrase.MERGE_ERR_LOG.format(
-                    time=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-                    issue=e
-                ))
-            return False, Phrase.MERGE_CORRUPT.format(issue_with=file.split("/")[-1])
-    merged_pdf.remove_unreferenced_resources()
-    merge_file_location = os.path.join(location, f'merged-{id_for_naming}.pdf')
-    merged_pdf.save(merge_file_location)
-    return True, merge_file_location
+    command_to_merge.append('--')
+    command_to_merge.append(location + f'/merged-{id_for_naming}.pdf')
+    print(command_to_merge)
+    process = await asyncio.create_subprocess_exec(
+                            *command_to_merge,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE)
+    stdout, stderr = await process.communicate()
+    print(process.returncode)
+    if process.returncode == 0:
+        print('here too')
+        return True, location + f'/merged-{id_for_naming}.pdf'
+    else:
+        return False, 'Something went wrong:\n' + str(stderr.decode('utf-8'))
 
 
 async def compressor(compression_ratio, location, file_name):
@@ -149,15 +161,15 @@ async def compressor(compression_ratio, location, file_name):
         )
     except Exception as e:
         with open("error_logging.txt", "at") as err_logger:
-                err_logger.write(Phrase.MERGE_ERR_LOG.format(
-                    time=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-                    issue=e
-                ))
+            err_logger.write(Phrase.MERGE_ERR_LOG.format(
+                time=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                issue=e
+            ))
         return False, 'Error occured while compressing'
 
 
 async def get_image_page(pdf_file, out_file, message_id, page_num):
-    total_pages = await page_no(pdf_file)
+    total_pages = page_no(pdf_file)
     if type(total_pages) != int:
         return False, total_pages
     print(total_pages)
@@ -188,7 +200,6 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
                 command_to_exec.append("-dFirstPage=" + str(i))
                 command_to_exec.append("-dLastPage=" + str(i))
                 command_to_exec.append(pdf_file)
-                print(command_to_exec)
                 process = await asyncio.create_subprocess_exec(
                     *command_to_exec)
                 await process.communicate()
@@ -210,7 +221,7 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
             process = await asyncio.create_subprocess_exec(
                 *command_to_exec)
             await process.communicate()
-            list_to_upload.append(InputMediaPhoto(extracted_file_location))
+            list_to_upload.append(extracted_file_location)
 
         await asyncio.sleep(2)
         return True, list_to_upload
