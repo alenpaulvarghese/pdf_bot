@@ -28,11 +28,16 @@ async def encrypter_cmd(client, message):
         filename, location = await downloader(
             message.reply_to_message,
             message.reply_to_message.document.file_name,
-            client
+            client,
             )
-        await dwn.edit(text='Succefully Downloaded...')
+        await dwn.delete()
+        dwn = await client.send_message(
+            chat_id=message.chat.id,
+            text='Succefully Downloaded...',
+            disable_notification=True
+            )
         await asyncio.sleep(1.5)
-        await dwn.edit(text='encrypting...')
+        dwn = await dwn.edit(text='encrypting...')
         something_went_wrong, final_name = encrypter(
             filename,
             password,
@@ -42,7 +47,7 @@ async def encrypter_cmd(client, message):
             await dwn.edit(text=final_name)
             return
         if not something_went_wrong:
-            await dwn.edit(text='Uploading...')
+            dwn = await dwn.edit(text='Uploading...')
             await client.send_document(
                 document=final_name,
                 chat_id=message.chat.id

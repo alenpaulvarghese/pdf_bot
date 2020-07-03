@@ -3,18 +3,11 @@ from pylovepdf.tools.compress import Compress
 from pyrogram import InputMediaPhoto
 from plugins.pdfbot_locale import Phrase
 from datetime import datetime, date
+from PIL import Image
 import subprocess
 import os
 import asyncio
-
-
-async def progressor(current, total, message, random_string):
-    percentage = "{:.1f}%".format(current * 100 / total)
-    try:
-        await message.edit(text=random_string + '\n' + str(percentage))
-        await asyncio.sleep(0.5)
-    except:
-        pass
+import time
 
 
 async def pdf_silcer(location, message_id, client, msg, naming):
@@ -113,27 +106,52 @@ def decrypter(file_name, password, location, id_for_naming):
         return True, 'The file has no protection'
 
 
-async def merger(file_name, id_for_naming, location):
-    command_to_merge = ['qpdf', '--empty', '--pages']
-    for file in file_name:
+# async def merger(file_name, id_for_naming, location, percentage):
+#     merged_pdf = Pdf.new()
+#     for current, file in enumerate(file_name, start=1):
+#         try:
+#             with Pdf.open(file, 'rb') as src:
+#                 merged_pdf.pages.extend(src.pages)
+#                 await percentage.edit("<b><i>Merging...{:.1f}%</b></i>".format(current * 100 / len(file_name)))
+#         except PasswordError as e:
+#             return False, Phrase.INVALID_PASSWORD.format(issue_with=file.split("/")[-1])
+#         except PdfError as e:
+#             print(e)
+#             return False, Phrase.MERGE_CORRUPT.format(issue_with=file.split("/")[-1])
+#     merged_pdf.remove_unreferenced_resources()
+#     merge_file_location = os.path.join(location, f'merged-{id_for_naming}.pdf')
+#     merged_pdf.save(merge_file_location)
+#     return True, merge_file_location
+
+
+async def merger(file_name, id_for_naming, location, percentage):
+    file_namer_list = []
+    for current, file in enumerate(file_name):
+        command_to_merge = ['qpdf', '--empty', '--pages']
         if not is_encrypted(file):
             command_to_merge.append(file)
+            if len(file_namer_list) != 0:
+                command_to_merge.append(file_namer_list[0])
+                file_namer_list.clear()
         else:
             return False, Phrase.INVALID_PASSWORD.format(issue_with=file.split("/")[-1])
-    command_to_merge.append('--')
-    command_to_merge.append(location + f'/merged-{id_for_naming}.pdf')
-    print(command_to_merge)
-    process = await asyncio.create_subprocess_exec(
-                            *command_to_merge,
-                            stdout=asyncio.subprocess.PIPE,
-                            stderr=asyncio.subprocess.PIPE)
-    stdout, stderr = await process.communicate()
-    print(process.returncode)
-    if process.returncode == 0:
-        print('here too')
-        return True, location + f'/merged-{id_for_naming}.pdf'
-    else:
-        return False, 'Something went wrong:\n' + str(stderr.decode('utf-8'))
+        command_to_merge.append('--')
+        file_namer = location + f'/merged-{current}.pdf'
+        command_to_merge.append(file_namer)
+        file_namer_list.append(file_namer)
+        process = await asyncio.create_subprocess_exec(
+                                *command_to_merge,
+                                stdout=asyncio.subprocess.PIPE,
+                                stderr=asyncio.subprocess.PIPE)
+        stdout, stderr = await process.communicate()
+        await percentage.edit("<b><i>Merging...{:.1f}%</b></i>".format(current * 100 / len(file_name)))
+        command_to_merge.clear()
+        if process.returncode == 0:
+            pass
+        else:
+            return False, 'Something went wrong:\n' + str(stderr.decode('utf-8'))
+
+    return True, file_namer
 
 
 async def compressor(compression_ratio, location, file_name):
@@ -177,7 +195,7 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
         if page_num > total_pages:
             return False, Phrase.PAGES_HIGH
         else:
-            command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r510x510", "-dPDFFitPage"]
+            command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r300", "-dDownScaleFactor=3"]
             extracted_file_location = out_file+'/extracted'+str(message_id)+'.jpeg'
             command_to_exec.append("-sOutputFile=" + extracted_file_location)
             command_to_exec.append("-dFirstPage=" + str(page_num))
@@ -193,8 +211,7 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
         list_to_upload = []
         if start_page <= total_pages and end_page >= start_page and end_page <= total_pages:
             for i in range(start_page, end_page+1):
-                print(i)
-                command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r510x510", "-dPDFFitPage"]
+                command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r300", "-dDownScaleFactor=3"]
                 extracted_file_location = out_file+'/extracted-'+str(message_id)+'-'+str(i)+'.jpeg'
                 command_to_exec.append("-sOutputFile=" + extracted_file_location)
                 command_to_exec.append("-dFirstPage=" + str(i))
@@ -203,7 +220,7 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
                 process = await asyncio.create_subprocess_exec(
                     *command_to_exec)
                 await process.communicate()
-                list_to_upload.append(InputMediaPhoto(extracted_file_location))
+                list_to_upload.append(extracted_file_location)
             await asyncio.sleep(2)
             return True, list_to_upload
         else:
@@ -212,7 +229,7 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
     elif page_num is None:
         list_to_upload = []
         for page in range(total_pages):
-            command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r510x510", "-dPDFFitPage"]
+            command_to_exec = ["gs", "-q", "-dNOPAUSE", "-dBATCH", "-sDEVICE=jpeg", "-r300", "-dDownScaleFactor=3"]
             extracted_file_location = out_file+'/extracted'+str(message_id)+'-'+str(page+1)+'.jpeg'
             command_to_exec.append("-sOutputFile=" + extracted_file_location)
             command_to_exec.append("-dFirstPage=" + str(page+1))
@@ -225,3 +242,10 @@ async def get_image_page(pdf_file, out_file, message_id, page_num):
 
         await asyncio.sleep(2)
         return True, list_to_upload
+
+
+def pdf_maker(filename, pdf_page_name):
+    to_rgb = Image.open(filename)
+    to_pdf = to_rgb.convert("RGB")
+    to_pdf.save(pdf_page_name)
+    return pdf_page_name

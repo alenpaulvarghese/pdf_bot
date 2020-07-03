@@ -71,8 +71,8 @@ async def pdftoimg_cmd(client, message):
         if success:
             await dwn.edit(text='Uploading...')
             if type(output_file) == list:
-                if len(output_file) > 5:
-                    await dwn.edit(text='<b>detected images more than 20\n\n<i>Zipping...</i></b>')
+                if len(output_file) > 15:
+                    await dwn.edit(text='<b>detected images more than 15\n\n<i>Zipping...</i></b>')
                     await asyncio.sleep(1)
                     # zipping if length is too high
                     zipped_file = f'{location}/extracted-aio_pdfbot.zip'

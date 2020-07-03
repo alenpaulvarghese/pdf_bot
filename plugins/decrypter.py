@@ -28,12 +28,11 @@ async def decrypter_cmd(client, message):
         filename, location = await downloader(
             message.reply_to_message,
             message.reply_to_message.document.file_name,
-            client
+            client,
             )
-        await dwn.edit(text='Succefully Downloaded...')
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(0.1)
         await dwn.edit(text='Decrypting...')
-        password_is_wrong, final_name = await decrypter(
+        password_is_wrong, final_name = decrypter(
             filename,
             password,
             location,

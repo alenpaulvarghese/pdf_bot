@@ -1,6 +1,6 @@
 from pyrogram import Client, Filters
 from plugins.pdfbot_locale import Phrase
-from plugins.tools_bundle import is_encrypted, downloader, merger, progressor
+from plugins.tools_bundle import is_encrypted, downloader, merger
 import shutil
 import asyncio
 
@@ -22,7 +22,7 @@ async def merger_cb(client, message):
                 return
         except ValueError:
             await message.reply_text(text=Phrase.INT_NOT_STR)
-            return 
+            return
         pdf_file_ids = []
         current_message_id = int(message.message_id)
         merge_amount = int(merge_amount)
@@ -63,23 +63,23 @@ async def merger_cb(client, message):
         await asyncio.sleep(3)
         file_names = []
         for number, files_in_this_list in enumerate(pdf_file_ids):
-            await random_message.edit(
+            random_message = await random_message.edit(
                 text=f'Downloading {int(number)+1} of {len(pdf_file_ids)}'
                 )
             await asyncio.sleep(1)
             filename, location = await downloader(
                 files_in_this_list,
                 files_in_this_list.document.file_name,
-                client
+                client,
             )
             file_names.append(filename)
         await random_message.edit(text='Download Finished')
         await random_message.edit(text='merging..')
-        print(location)
         boolean, merged_file_name = await merger(
             file_names,
             str(message.message_id),
-            location
+            location,
+            random_message
         )
         if boolean:
             await random_message.delete()
@@ -87,8 +87,6 @@ async def merger_cb(client, message):
             await client.send_document(
                 document=merged_file_name,
                 chat_id=message.chat.id,
-                progress=progressor,
-                progress_args=(random_message, 'Uploading')
             )
             await random_message.edit('<b>Succefully Uploaded</b>')
             await asyncio.sleep(10)
