@@ -1,19 +1,24 @@
-from pyrogram import Client, Filters
-from plugins.pdfbot_locale import Phrase
-from plugins.tools_bundle import downloader
+from plugins.tools_bundle import downloader, check_size  # pylint:disable=import-error
+from plugins.pdfbot_locale import Phrase  # pylint:disable=import-error
+from pyrogram import Client, filters
 import shutil
 import asyncio
 
 
-@Client.on_message(Filters.command(["rename"]) & ~Filters.edited)
+@Client.on_message(filters.command(["rename"]) & ~filters.edited)
 async def rename_cb(client, message):
     if (" " in message.text) and (message.reply_to_message is not None):
-        cmd, file_rename_name = message.text.split(" ", 1)
+        _, file_rename_name = message.text.split(" ", 1)
         if (message.reply_to_message.document is None
                 or message.reply_to_message.document.mime_type
                 != "application/pdf"):
             await message.reply_text(
                 Phrase.NOT_PDF
+            )
+            return
+        elif await check_size(message.reply_to_message.document.file_size):
+            await message.reply_text(
+                Phrase.FILE_SIZE_HIGH
             )
             return
         # https://github.com/SpEcHiDe/AnyDLBot/blob/f112fc1e7ca72a6327fc0db68c049b096a588dac/plugins/rename_file.py#L47
@@ -29,7 +34,7 @@ async def rename_cb(client, message):
         elif '.pdf' not in file_rename_name:
             file_rename_name += '.pdf'
         random_message = await message.reply_text("Downloading..")
-        filename, location = await downloader(
+        filename, _ = await downloader(
             message.reply_to_message,
             file_rename_name,
             client

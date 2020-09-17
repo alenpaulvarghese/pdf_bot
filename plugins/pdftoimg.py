@@ -1,12 +1,13 @@
-from pyrogram import Client, Filters, InputMediaPhoto
-from plugins.tools_bundle import downloader, get_image_page
-from plugins.pdfbot_locale import Phrase
+from pyrogram import Client, filters
+from pyrogram.types import InputMediaPhoto
+from plugins.tools_bundle import downloader, get_image_page  # pylint:disable=import-error
+from plugins.pdfbot_locale import Phrase  # pylint:disable=import-error
 from zipfile import ZipFile
 import asyncio
 import shutil
 
 
-@Client.on_message(Filters.command(["extract"]) & ~Filters.edited)
+@Client.on_message(filters.command(["extract"]) & ~filters.edited)
 async def pdftoimg_cmd(client, message):
     if(message.reply_to_message is not None):
         if (message.reply_to_message.document is None or
@@ -16,7 +17,7 @@ async def pdftoimg_cmd(client, message):
             )
             return
         if (" " in message.text):
-            cmd, page_no = message.text.split(" ", 1)
+            _, page_no = message.text.split(" ", 1)
             if('-' in page_no):
                 page_range = page_no.split("-", 1)
                 try:
@@ -29,7 +30,6 @@ async def pdftoimg_cmd(client, message):
                         return
                     page_no = [page_start, page_stop]
                 except ValueError:
-                    print('Raised Value Error')
                     await message.reply_text(
                         Phrase.WRONG_FORMAT
                     )
@@ -39,9 +39,9 @@ async def pdftoimg_cmd(client, message):
                     page_no = int(page_no)
                     if page_no == 0:
                         await message.reply_text(
-                        Phrase.WRONG_FORMAT
-                            )
-                        return 
+                            Phrase.WRONG_FORMAT
+                                )
+                        return
                 except ValueError:
                     await message.reply_text(
                         Phrase.WRONG_FORMAT

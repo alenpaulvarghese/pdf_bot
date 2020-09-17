@@ -1,13 +1,18 @@
 from pikepdf import Pdf, PdfError, PasswordError
 from pylovepdf.tools.compress import Compress
-from pyrogram import InputMediaPhoto
-from plugins.pdfbot_locale import Phrase
-from datetime import datetime, date
+from plugins.pdfbot_locale import Phrase  # pylint:disable=import-error
+from datetime import date
 from PIL import Image
 import subprocess
 import os
 import asyncio
-import time
+
+
+async def check_size(file_size):
+    if file_size < 5e+7:
+        return False
+    else:
+        return True
 
 
 async def pdf_silcer(location, message_id, client, msg, naming):
@@ -30,7 +35,7 @@ async def pdf_silcer(location, message_id, client, msg, naming):
                 os.remove(location)
             os.chdir(current_directory)
             await msg.reply(text=f'Successfully Uploaded {int(n)+1} files')
-    except PasswordError as e:
+    except PasswordError:
         await msg.edit('Please decrypt the PDF')
         await asyncio.sleep(10)
 
@@ -143,7 +148,7 @@ async def merger(file_name, id_for_naming, location, percentage):
                                 *command_to_merge,
                                 stdout=asyncio.subprocess.PIPE,
                                 stderr=asyncio.subprocess.PIPE)
-        stdout, stderr = await process.communicate()
+        _, stderr = await process.communicate()
         await percentage.edit("<b><i>Merging...{:.1f}%</b></i>".format(current * 100 / len(file_name)))
         command_to_merge.clear()
         if process.returncode == 0:
@@ -156,7 +161,7 @@ async def merger(file_name, id_for_naming, location, percentage):
 
 async def compressor(compression_ratio, location, file_name):
     try:
-        #os.environ.get(COMPRESS_API)
+        # os.environ.get(COMPRESS_API)
         API_PDF = 'project_public_b5530332283b096e921c0e6e8df8a12a_1HzdL6b2fc4ee89ae7031bb53977e325c2df3'
     except Exception:
         print('API FOR COMPRESSION NOT FOUND')
@@ -172,17 +177,7 @@ async def compressor(compression_ratio, location, file_name):
         t.delete_current_task()
         tday = date.today().strftime("%d-%m-%Y")
         return True, f'{location}/compress_{tday}.pdf'
-        await client.send_document(
-            document=f'{location}/compress_{tday}.pdf',
-            chat_id=callback_query.message.chat.id,
-            caption="Compressed PDF"
-        )
-    except Exception as e:
-        with open("error_logging.txt", "at") as err_logger:
-            err_logger.write(Phrase.MERGE_ERR_LOG.format(
-                time=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-                issue=e
-            ))
+    except Exception:
         return False, 'Error occured while compressing'
 
 

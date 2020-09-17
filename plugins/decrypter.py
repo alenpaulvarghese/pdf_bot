@@ -1,22 +1,26 @@
-from pyrogram import Client, Filters
-from plugins.tools_bundle import downloader, decrypter
-from plugins.pdfbot_locale import Phrase
+from pyrogram import Client, filters
+from plugins.tools_bundle import downloader, decrypter, check_size  # pylint:disable=import-error
+from plugins.pdfbot_locale import Phrase  # pylint:disable=import-error
 import asyncio
 import shutil
 
 
-@Client.on_message(Filters.command(["decrypt"]) & ~Filters.edited)
+@Client.on_message(filters.command(["decrypt"]) & ~filters.edited)
 async def decrypter_cmd(client, message):
     # https://github.com/SpEcHiDe/AnyDLBot/blob/f112fc1e7ca72a6327fc0db68c049b096a588dac/plugins/rename_file.py#L45
     if (" " in message.text) and (message.reply_to_message is not None):
-        cmd, password = message.text.split(" ", 1)
+        _, password = message.text.split(" ", 1)
         if (message.reply_to_message.document is None or
                 message.reply_to_message.document.mime_type != "application/pdf"):
             await message.reply_text(
                 Phrase.NOT_PDF
             )
             return
-
+        elif await check_size(message.reply_to_message.document.file_size):
+            await message.reply_text(
+                Phrase.FILE_SIZE_HIGH
+            )
+            return
         if len(password) > 60:
             await message.reply_text(
                 Phrase.LONG_PASSWORD.format(

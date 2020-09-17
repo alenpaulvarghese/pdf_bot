@@ -1,12 +1,12 @@
-from pyrogram import Client, Filters, InlineKeyboardButton, InlineKeyboardMarkup
-from plugins.tools_bundle import pdf_silcer, is_encrypted, downloader, decrypter, compressor
-from plugins.pdfbot_locale import Phrase
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from plugins.tools_bundle import downloader, compressor  # pylint:disable=import-error
+from plugins.pdfbot_locale import Phrase  # pylint:disable=import-error
 import asyncio
-import os
 import shutil
 
 
-@Client.on_message(Filters.command(["start"]))
+@Client.on_message(filters.command(["start"]))
 async def start(client, message):
     await client.send_message(
         chat_id=message.chat.id,
@@ -91,7 +91,7 @@ async def cb_(client, callback_query):
             await asyncio.sleep(5)
             shutil.rmtree(Phrase.LOCATION.format(loc=callback_query.message.chat.id))
         elif not success:
-            await random_message.edit(text=compressed_file)
+            await msg.reply_text(text=compressed_file)
     elif cb_data == 'back':
         await msg.edit(
             text='Please Choose an option',

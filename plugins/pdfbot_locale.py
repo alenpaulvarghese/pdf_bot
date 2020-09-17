@@ -1,7 +1,9 @@
 # idea from https://github.com/SpEcHiDe/AnyDLBot/blob/master/translation.py
-from pyrogram import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 
 class Phrase(object):
+
     DECRYPT_GUIDE = '<b>Decrypt PDF using the following method</b>\n1. send the pdf file\n2. send the following command as a reply to the pdf file\n<code>/decrypt "passphrase"</code>'
     ENCRYPT_GUIDE = '<b>Encrypt PDF using the following method</b>\n1. send the pdf file\n2. send the following command as a reply to the pdf file\n<code>/encrypt "passphrase"</code>'
     HOME_NAV = InlineKeyboardMarkup([
@@ -12,10 +14,10 @@ class Phrase(object):
                     [InlineKeyboardButton(text='cancel', callback_data='cancel')]
                 ])
     COMPRESS_NAV = InlineKeyboardMarkup([
-                 [InlineKeyboardButton(text='low', callback_data='low')],
-                 [InlineKeyboardButton(text='recommended', callback_data='recommended')],
-                 [InlineKeyboardButton(text='high', callback_data='extreme')],
-                 [InlineKeyboardButton(text='cancel', callback_data='cancel')]
+                    [InlineKeyboardButton(text='low', callback_data='low')],
+                    [InlineKeyboardButton(text='recommended', callback_data='recommended')],
+                    [InlineKeyboardButton(text='high', callback_data='extreme')],
+                    [InlineKeyboardButton(text='cancel', callback_data='cancel')]
                 ])
     BACK_MARKUP = InlineKeyboardMarkup([
         [InlineKeyboardButton(text='back', callback_data='back')]
@@ -44,3 +46,4 @@ class Phrase(object):
     WENT_WRONG = "soory something went wrong"
     LOCATION = "./FILES/{loc}"
     NOT_FILLED = "This guide is not finished writing yet"
+    FILE_SIZE_HIGH = "<b>Soory the given file size is greater than 50MB</b>"

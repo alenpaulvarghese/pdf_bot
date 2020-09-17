@@ -1,14 +1,14 @@
-from pyrogram import Client, Filters
-from plugins.pdfbot_locale import Phrase
-from plugins.tools_bundle import is_encrypted, downloader, merger
+from pyrogram import Client, filters
+from plugins.pdfbot_locale import Phrase  # pylint:disable=import-error
+from plugins.tools_bundle import downloader, merger, check_size  # pylint:disable=import-error
 import shutil
 import asyncio
 
 
-@Client.on_message(Filters.command(["merge"]))
+@Client.on_message(filters.command(["merge"]))
 async def merger_cb(client, message):
     if (" " in message.text):
-        cmd, merge_amount = message.text.split(" ", 1)
+        _, merge_amount = message.text.split(" ", 1)
         try:
             if int(merge_amount) > 10:
                 await message.reply_text(
@@ -28,6 +28,7 @@ async def merger_cb(client, message):
         merge_amount = int(merge_amount)
         x, y = 1, 4
         random_message = await message.reply_text(text='Searching...')
+        total_size = 0
         # complexity starting
         while x < merge_amount+1 and y > 0:
             current_message_id -= 1
@@ -41,9 +42,15 @@ async def merger_cb(client, message):
                 merge_amount -= 1
                 continue
             pdf_file_ids.append(pdf)
+            total_size += pdf.document.file_size
             merge_amount -= 1
         # complexity finished
-        if len(pdf_file_ids) <= 1:
+        if await check_size(total_size):
+            await random_message.edit(
+                text=Phrase.FILE_SIZE_HIGH
+            )
+            return
+        elif len(pdf_file_ids) <= 1:
             await random_message.edit(text=Phrase.MERGE_NO_PDF)
             return
         for_callback_filename = [Phrase.MERGE_APPROVE.format(
@@ -52,7 +59,7 @@ async def merger_cb(client, message):
         pdf_file_ids.reverse()
         for numbering, making_message in enumerate(pdf_file_ids):
             for_callback_filename.append(
-               Phrase.MERGE_MESSAGE.format(
+                Phrase.MERGE_MESSAGE.format(
                     num=str(numbering+1),
                     filename=making_message.document.file_name
                     )

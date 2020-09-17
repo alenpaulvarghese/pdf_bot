@@ -1,14 +1,11 @@
-import shutil
-import asyncio
-from plugins.pdfbot_locale import Phrase
-from datetime import date
-from pylovepdf.tools.compress import Compress
-from pyrogram import Client, Filters
+from plugins.pdfbot_locale import Phrase  # pylint:disable=import-error
+from pyrogram import Client, filters
+from plugins.tools_bundle import check_size  # pylint:disable=import-error
 
 API_PDF = ''
 
 
-@Client.on_message(Filters.command(["compress"]) & ~Filters.edited)
+@Client.on_message(filters.command(["compress"]) & ~filters.edited)
 async def compressor_cb(client, message):
     if (message.reply_to_message is not None):
         if (message.reply_to_message.document is None or
@@ -16,6 +13,11 @@ async def compressor_cb(client, message):
             await message.reply_text(
                 Phrase.NOT_PDF
                 )
+            return
+        elif await check_size(message.reply_to_message.document.file_size):
+            await message.reply_text(
+                Phrase.FILE_SIZE_HIGH
+            )
             return
         await client.send_message(
             chat_id=message.chat.id,

@@ -1,15 +1,14 @@
-from pyrogram import Client, Filters
-from plugins.pdfbot_locale import Phrase
-from plugins.tools_bundle import downloader, merger, pdf_maker
+from pyrogram import Client, filters
+from plugins.pdfbot_locale import Phrase  # pylint:disable=import-error
+from plugins.tools_bundle import downloader, merger, pdf_maker  # pylint:disable=import-error
 import shutil
 import asyncio
-import os
 
 
-@Client.on_message(Filters.command(["makepdf"]))
+@Client.on_message(filters.command(["makepdf"]) & filters.private)
 async def maker_cb(client, message):
     if (" " in message.text):
-        cmd, maker = message.text.split(" ", 1)
+        _, maker = message.text.split(" ", 1)
         try:
             if int(maker) > 20:
                 await message.reply_text(
@@ -34,7 +33,7 @@ async def maker_cb(client, message):
             current_message_id -= 1
             memo = await client.get_messages(message.chat.id, current_message_id)
             if (memo.empty or memo.from_user.is_self):
-                    # or pdf.document.mime_type != "application/pdf"):
+                # or pdf.document.mime_type != "application/pdf"):
                 if not memo.empty and not memo.from_user.is_self:
                     y -= 1
                 x -= 1
@@ -44,7 +43,7 @@ async def maker_cb(client, message):
             maker -= 1
         # complexity finished
         maker_list = []
-        for number, each_message in enumerate(pdf_file_ids):
+        for _, each_message in enumerate(pdf_file_ids):
             if each_message.photo is not None:
                 filename, location = await downloader(
                     each_message,
