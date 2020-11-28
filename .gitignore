@@ -1,4 +1,4 @@
-/__pycache__
-creds.py
+debug.log
+__pycache__
 *.session
 *.pyc
