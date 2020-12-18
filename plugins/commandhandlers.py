@@ -1,9 +1,10 @@
-from tool_bundle.utils import PdfTask, Files   # pylint:disable=import-error
+from tool_bundle.utils import MakePdf, PdfTask, Files  # pylint:disable=import-error
 from pyrogram import Client, filters
 from PIL import Image
 from typing import List
 from pyrogram.types import (
     Message,
+    ForceReply,
     CallbackQuery,
     KeyboardButton,
     InputMediaPhoto,
@@ -40,6 +41,7 @@ async def rotate_image(file_path: str, degree: int) -> str:
     """rotate images from input file_path and degree"""
     origin = Image.open(file_path)
     rotated_image = origin.rotate(degree, expand=True)
+    await asyncio.sleep(0.001)
     rotated_image.save(file_path)
     LOGGER.debug(f"Image rotated and saved to --> {file_path}")
     return file_path
@@ -55,7 +57,7 @@ async def start(_, message: Message):
             one_time_keyboard=True,
         ),
     )
-    new_task = PdfTask(message.chat.id, message.message_id)
+    new_task = MakePdf(message.chat.id, message.message_id)
     global _tasks_
     _tasks_.append(new_task)
     await new_task.file_allocator()
@@ -72,10 +74,29 @@ async def explorer(_, message: Message):
         else:
             LOGGER.debug("task not found :ignoring:")
         await message.reply_text(
-            "**Task cancelled**",
-            reply_markup=ReplyKeyboardRemove()
+            "**Task cancelled**", reply_markup=ReplyKeyboardRemove()
         )
-
+    if message.text == "Done":
+        if len(current_task.proposed_files) == 0:
+            await message.reply_text("No images found for processing")
+            return
+        await message.reply_text(
+            "Now select one option.",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton("Use default filename", "default"),
+                        InlineKeyboardButton("Use custom filename", "custom"),
+                    ]
+                ]
+            ),
+        )
+    if message.reply_to_message and ForceReply.__instancecheck__(
+        message.reply_to_message.reply_markup
+    ):
+        current_task.output = message.text.replace("/", "").replace("\\", "")
+        LOGGER.debug(f"set custom filename -> {current_task.output} >> now processing")
+        await current_task.process()
     if message.photo:
         location = f"{current_task.cwd}/{message.message_id}.jpeg"
         await message.download(location)
@@ -94,19 +115,34 @@ async def explorer(_, message: Message):
             ),
         )
         await message.delete()
-    if (
-        message.photo
-        or message.document
-        or (message.document.mime_type in ["image/png", "image/jpeg"])
-    ):
+    if message.document and (message.document.mime_type in ["image/png", "image/jpeg"]):
         pass
 
 
 @Client.on_callback_query()
 async def callback_handler(_, callback: CallbackQuery):
     message: Message = callback.message
-    ext_id = int(callback.data.split(":", 1)[0])
     current_task = await yield_task(message.chat.id)
+    if "custom" in callback.data or "default" in callback.data:
+        if current_task is None:
+            await message.reply_text("task timed-out/cancelled")
+            LOGGER.debug("failed renaming > task missing")
+            return
+        if "custom" in callback.data:
+            await asyncio.gather(
+                message.reply_text(
+                    "Reply the filename you want",
+                    reply_markup=ForceReply(),
+                ),
+                message.delete(),
+            )
+        elif "default" in callback.data:
+            await asyncio.gather(
+                await message.delete(),
+                await current_task.process(),
+            )
+        return
+    ext_id = int(callback.data.split(":", 1)[0])
     if "rotate" in callback.data:
         degree = int(callback.data.split(":", 2)[2])
         file_path = (await current_task.find_files(ext_id)).path
