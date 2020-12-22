@@ -33,8 +33,10 @@ class PdfTask(object):
         await asyncio.sleep(0.001)
 
     async def find_files(self, file_id: int) -> Files:
-        """find `File` objects in temp_files list usign file_id"""
-        return [x for x in self.temp_files if x.file_id == file_id][0]
+        """find `File` objects in temp_files list using file_id"""
+        data = [x for x in self.temp_files if x.file_id == file_id]
+        if len(data) > 0:
+            return data[0]
 
 
 class MakePdf(PdfTask):
@@ -42,6 +44,7 @@ class MakePdf(PdfTask):
         super().__init__(chat_id, message_id)
 
     async def process(self):
+        print(self.proposed_files)
         images: List[Image] = [Image.open(x.path) for x in self.proposed_files]
         primary = images.pop(0)
         primary.save(
