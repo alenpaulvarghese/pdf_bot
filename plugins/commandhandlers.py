@@ -1,16 +1,13 @@
-from tool_bundle.utils import MakePdf, Files  # pylint:disable=import-error
+from tool_bundle.utils import MakePdf  # pylint:disable=import-error
 from pyrogram import filters
-from PIL import Image
 from worker import Worker  # pylint:disable=import-error
+from PIL import Image
 from pyrogram.types import (
     Message,
     CallbackQuery,
     KeyboardButton,
     InputMediaPhoto,
-    ReplyKeyboardRemove,
     ReplyKeyboardMarkup,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
 )
 import logging
 import asyncio
@@ -38,7 +35,7 @@ async def rotate_image(file_path: str, degree: int) -> str:
 
 
 @Worker.on_message(filters.command(["make"]))
-async def start(_, message: Message):
+async def start(client: Worker, message: Message):
     await message.reply_text(
         "Now send me the photos",
         reply_markup=ReplyKeyboardMarkup(
@@ -47,53 +44,13 @@ async def start(_, message: Message):
             one_time_keyboard=True,
         ),
     )
-    new_task = MakePdf(message.chat.id, message.message_id)
+    new_task = MakePdf(message.chat.id, message.message_id, client)
     Worker.tasks[message.chat.id] = new_task
-    await new_task.file_allocator()
-
-
-@Worker.on_message()
-async def explorer(_, message: Message):
-    current_task = Worker.tasks.get(message.chat.id)
-    if current_task is not None and message.photo:
-        location = f"{current_task.cwd}/{message.message_id}.jpeg"
-        await message.download(location)
-        LOGGER.debug("download complete sending back image")
-        current_task.temp_files.append(Files(message.message_id, location))
-        await message.reply_photo(
-            photo=location,
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton("🔄", f"{message.message_id}:rotate:90"),
-                        InlineKeyboardButton("✅", f"{message.message_id}:insert"),
-                        InlineKeyboardButton("❌", f"{message.message_id}:remove"),
-                    ]
-                ]
-            ),
-        )
-        await message.delete()
-    if message.text == "Cancel":
-        if message.chat.id in Worker.tasks:
-            Worker.tasks.pop(message.chat.id)
-            LOGGER.debug("task deleted successfully")
-        else:
-            LOGGER.debug("task not found :ignoring:")
-        await message.reply_text(
-            "**Task cancelled**", reply_markup=ReplyKeyboardRemove()
-        )
-    if message.text == "Done":
-        if current_task is None:
-            await message.reply_text(
-                "**Task Expired !**", reply_markup=ReplyKeyboardRemove()
-            )
-            return
-        if len(current_task.proposed_files) == 0:
-            await message.reply_text("No images found for processing")
-            return
-        await current_task.process()
-    if message.document and (message.document.mime_type in ["image/png", "image/jpeg"]):
-        pass
+    await asyncio.gather(
+        new_task.file_allocator(),
+        new_task.add_handlers(client),
+    )
+    print(message.chat.id in Worker.tasks)
 
 
 @Worker.on_callback_query()
