@@ -22,7 +22,8 @@ class Files(object):
         self.path = path
 
     def __del__(self):
-        os.remove(self.path)
+        if os.path.isfile(self.path):
+            os.remove(self.path)
 
 
 class PdfTask(object):
@@ -63,15 +64,15 @@ class PdfTask(object):
         client.add_handler(
             MessageHandler(
                 PdfTask.command_handler,
-                filters.text
-                & filters.create(lambda _, __, m: m.chat.id in Worker.tasks),
-            )
+                filters.text,
+            ),
+            group=0,
         )
 
     @staticmethod
     async def command_handler(_, message: Message):
         """custom handler made during task creation."""
-        current_task = Worker.tasks.get(message.chat.id)
+        current_task: PdfTask = Worker.tasks.get(message.chat.id)
         if message.text == "Cancel":
             if message.chat.id in Worker.tasks:
                 Worker.tasks.pop(message.chat.id)
@@ -87,6 +88,16 @@ class PdfTask(object):
             if len(current_task.proposed_files) == 0:
                 await message.reply_text("No files found for processing")
                 return
+            else:
+                Worker.process_queue.append(current_task)
+                while current_task.status == 0:
+                    await asyncio.sleep(1.2)
+                else:
+                    if current_task.status == 2:
+                        await message.reply_text("**task failed**")
+                    elif current_task.status == 1:
+                        await message.reply_document(current_task.output)
+                        current_task.__del__()
 
 
 class MakePdf(PdfTask):

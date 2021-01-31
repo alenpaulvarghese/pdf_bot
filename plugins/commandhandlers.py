@@ -44,13 +44,12 @@ async def start(client: Worker, message: Message):
             one_time_keyboard=True,
         ),
     )
-    new_task = MakePdf(message.chat.id, message.message_id, client)
+    new_task = MakePdf(message.chat.id, message.message_id)
     Worker.tasks[message.chat.id] = new_task
     await asyncio.gather(
         new_task.file_allocator(),
         new_task.add_handlers(client),
     )
-    print(message.chat.id in Worker.tasks)
 
 
 @Worker.on_callback_query()

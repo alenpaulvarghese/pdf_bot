@@ -25,9 +25,8 @@ class Worker(Client):
                 for single_task in Worker.process_queue:
                     print(f"process_queue currently having {len(Worker.process_queue)} pending task")
                     await single_task.process()
-                    Worker.process_queue.remove(single_task)
                     single_task.status = 1
+                    Worker.process_queue.remove(single_task)
                     await asyncio.sleep(5)
-                    single_task.__del__()
             else:
                 await asyncio.sleep(1)
