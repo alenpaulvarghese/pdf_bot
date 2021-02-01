@@ -23,10 +23,14 @@ class Worker(Client):
         while True:
             while len(Worker.process_queue) != 0:
                 for single_task in Worker.process_queue:
-                    print(f"process_queue currently having {len(Worker.process_queue)} pending task")
-                    await single_task.process()
-                    single_task.status = 1
-                    Worker.process_queue.remove(single_task)
-                    await asyncio.sleep(5)
+                    try:
+                        await single_task.process()
+                        single_task.status = 1
+                    except Exception as e:
+                        single_task.error_code = str(e)
+                        single_task.status = 2
+                    finally:
+                        Worker.process_queue.remove(single_task)
+                        await asyncio.sleep(5)
             else:
                 await asyncio.sleep(1)

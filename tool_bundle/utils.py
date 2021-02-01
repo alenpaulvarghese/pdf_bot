@@ -28,14 +28,23 @@ class Files(object):
 
 class PdfTask(object):
     def __init__(self, chat_id: int, message_id: int):
+        # chat_id is used to identify each task message_id is used to allocate folders.
         self.chat_id = chat_id
         self.message_id = message_id
+        # current working directory for each tasks ( will be allocated by method `file_allocator` ).
         self.cwd = None
+        # downloaded temporary files which are waiting for user confirmation to be added in proposed_files.
         self.temp_files: List[Files] = []
+        # files that will be going to output.
         self.proposed_files: List[Files] = []
+        # default filename for tasks.
         self.output = "output"
         # 0-pending, 1-finished, 2-failed
         self.status = 0
+        # string for identifying exceptions if there exist any.
+        self.error_code = "something went wrong"
+        # quiet True if -q|-quiet flag is used else false; reduces info messages.
+        self.quiet = False
 
     def __del__(self):
         for fs in self.temp_files + self.proposed_files:
@@ -89,12 +98,16 @@ class PdfTask(object):
                 await message.reply_text("No files found for processing")
                 return
             else:
+                await message.reply_text(
+                    "**processing...**",
+                    reply_markup=ReplyKeyboardRemove(),
+                )
                 Worker.process_queue.append(current_task)
                 while current_task.status == 0:
                     await asyncio.sleep(1.2)
                 else:
                     if current_task.status == 2:
-                        await message.reply_text("**task failed**")
+                        await message.reply_text(f"**Task failed: `{current_task.error_code}`**")
                     elif current_task.status == 1:
                         await message.reply_document(current_task.output)
                         current_task.__del__()

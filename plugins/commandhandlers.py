@@ -50,6 +50,23 @@ async def start(client: Worker, message: Message):
         new_task.file_allocator(),
         new_task.add_handlers(client),
     )
+    if len(message.command) > 1:
+        for commands in message.command:
+            if commands.startswith("-"):
+                if commands == "-q" or message.command == "-quiet":
+                    new_task.quiet = True
+                # for future development.
+                elif commands == "-d" or message.command == "-direct":
+                    pass
+            else:
+                filename = commands
+            if len(filename) > 64:
+                await message.reply_text("**WARNING:** file name too long, reducing...")
+                filename = filename[:64]
+            if filename.endswith('.PDF') or filename.endswith('.pdf'):
+                filename = filename.replace('.PDF', '')
+                filename = filename.replace('.pdf', '')
+            new_task.output = filename
 
 
 @Worker.on_callback_query()
@@ -76,7 +93,7 @@ async def callback_handler(_, callback: CallbackQuery):
             current_task.temp_files.remove(file_object)
         current_task.proposed_files.append(file_object)
         await asyncio.gather(
-            message.delete(), message.reply_text("photo added successfully")
+            message.delete(), (message.reply_text("photo added successfully") if not current_task.quiet else asyncio.sleep(0))
         )
         LOGGER.debug("image added to proposal queue")
     if "remove" in callback.data:
