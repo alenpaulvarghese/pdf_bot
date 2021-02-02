@@ -1,4 +1,4 @@
-from tool_bundle.utils import MakePdf  # pylint:disable=import-error
+from tool_bundle.utils import MakePdf, Merge  # pylint:disable=import-error
 from pyrogram import filters
 from worker import Worker  # pylint:disable=import-error
 from PIL import Image
@@ -34,17 +34,18 @@ async def rotate_image(file_path: str, degree: int) -> str:
     return file_path
 
 
-@Worker.on_message(filters.command(["make"]))
-async def start(client: Worker, message: Message):
+@Worker.on_message(filters.command(["merge", "make"]))
+async def merge(client: Worker, message: Message):
+    is_merge = message.command[0] == "merge"
     await message.reply_text(
-        "Now send me the photos",
+        f"Now send me the {'pdf files' if is_merge else 'photos'}",
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[[KeyboardButton("Done"), KeyboardButton("Cancel")]],
             resize_keyboard=True,
             one_time_keyboard=True,
         ),
     )
-    new_task = MakePdf(message.chat.id, message.message_id)
+    new_task = (Merge if is_merge else MakePdf)(message.chat.id, message.message_id)
     Worker.tasks[message.chat.id] = new_task
     await asyncio.gather(
         new_task.file_allocator(),

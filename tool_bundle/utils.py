@@ -10,6 +10,7 @@ from pyrogram.types import (
 from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
 from worker import Worker  # pylint:disable=import-error
+from pikepdf import Pdf
 from typing import List
 from PIL import Image
 import asyncio
@@ -113,6 +114,58 @@ class PdfTask(object):
                     elif current_task.status == 1:
                         await message.reply_document(current_task.output)
                         current_task.__del__()
+
+
+class Merge(PdfTask):
+    def __init__(self, chat_id: int, message_id: int):
+        super().__init__(chat_id, message_id)
+
+    async def process(self):
+        pdfs: List[Pdf] = [Pdf.open(x.path) for x in self.proposed_files]
+        source = pdfs.pop(0)
+        for pdf in pdfs:
+            source.pages.extend(pdf.pages)
+            await asyncio.sleep(0.1)
+        self.output = self.cwd + self.output + ".pdf"
+        source.save(self.output)
+
+    async def add_handlers(self, client: Client) -> None:
+        """add handler to Client according to the tasks."""
+        await super().add_handlers(client)
+        client.add_handler(
+            MessageHandler(
+                self.command_handler,
+                filters.create(lambda _, __, m: m.document and m.document.mime_type == "application/pdf")
+                & filters.create(lambda _, __, m: m.chat.id in Worker.tasks),
+            )
+        )
+
+    @staticmethod
+    async def command_handler(_, message: Message):
+        """handler to determine photos under make task."""
+        current_task: Merge = Worker.tasks.get(message.chat.id)
+        if current_task is not None and message.document and message.document.mime_type == "application/pdf":
+            location = f"{current_task.cwd}/{message.message_id}.pdf"
+            await message.download(location)
+            if current_task.direct:
+                current_task.proposed_files.append(Files(message.message_id, location))
+                await asyncio.gather(
+                    message.delete(), (message.reply_text("pdf added successfully") if not current_task.quiet else asyncio.sleep(0))
+                )
+                return
+            current_task.temp_files.append(Files(message.message_id, location))
+            await message.reply_document(
+                document=location,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton("✅", f"{message.message_id}:insert"),
+                            InlineKeyboardButton("❌", f"{message.message_id}:remove"),
+                        ]
+                    ]
+                ),
+            )
+            await message.delete()
 
 
 class MakePdf(PdfTask):
