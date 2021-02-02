@@ -51,22 +51,21 @@ async def start(client: Worker, message: Message):
         new_task.add_handlers(client),
     )
     if len(message.command) > 1:
-        for commands in message.command:
+        for commands in message.command[1:]:
             if commands.startswith("-"):
-                if commands == "-q" or message.command == "-quiet":
+                if commands == "-q" or commands == "-quiet":
                     new_task.quiet = True
-                # for future development.
-                elif commands == "-d" or message.command == "-direct":
-                    pass
+                elif commands == "-d" or commands == "-direct":
+                    new_task.direct = True
             else:
                 filename = commands
-            if len(filename) > 64:
-                await message.reply_text("**WARNING:** file name too long, reducing...")
-                filename = filename[:64]
-            if filename.endswith('.PDF') or filename.endswith('.pdf'):
-                filename = filename.replace('.PDF', '')
-                filename = filename.replace('.pdf', '')
-            new_task.output = filename
+                if len(filename) > 64:
+                    await message.reply_text("**WARNING:** file name too long, reducing...")
+                    filename = filename[:64]
+                if filename.endswith('.PDF') or filename.endswith('.pdf'):
+                    filename = filename.replace('.PDF', '')
+                    filename = filename.replace('.pdf', '')
+                new_task.output = filename
 
 
 @Worker.on_callback_query()

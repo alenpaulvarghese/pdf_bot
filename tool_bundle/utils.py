@@ -45,6 +45,8 @@ class PdfTask(object):
         self.error_code = "something went wrong"
         # quiet True if -q|-quiet flag is used else false; reduces info messages.
         self.quiet = False
+        # for flag -d|-direct; send files directly to proposed queue without user approval.
+        self.direct = False
 
     def __del__(self):
         for fs in self.temp_files + self.proposed_files:
@@ -144,10 +146,16 @@ class MakePdf(PdfTask):
     @staticmethod
     async def command_handler(_, message: Message):
         """handler to determine photos under make task."""
-        current_task = Worker.tasks.get(message.chat.id)
+        current_task: MakePdf = Worker.tasks.get(message.chat.id)
         if current_task is not None and message.photo:
             location = f"{current_task.cwd}/{message.message_id}.jpeg"
             await message.download(location)
+            if current_task.direct:
+                current_task.proposed_files.append(Files(message.message_id, location))
+                await asyncio.gather(
+                    message.delete(), (message.reply_text("photo added successfully") if not current_task.quiet else asyncio.sleep(0))
+                )
+                return
             current_task.temp_files.append(Files(message.message_id, location))
             await message.reply_photo(
                 photo=location,
