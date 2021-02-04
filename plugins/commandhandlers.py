@@ -89,13 +89,20 @@ async def callback_handler(_, callback: CallbackQuery):
         )
     elif "insert" in callback.data:
         file_object = await current_task.find_files(ext_id)
-        if file_object in current_task.temp_files:
+        print(file_object)
+        if file_object is not None and file_object in current_task.temp_files:
             current_task.temp_files.remove(file_object)
-        current_task.proposed_files.append(file_object)
-        await asyncio.gather(
-            message.delete(), (message.reply_text("photo added successfully") if not current_task.quiet else asyncio.sleep(0))
-        )
-        LOGGER.debug("image added to proposal queue")
+            current_task.proposed_files.append(file_object)
+            await asyncio.gather(
+                message.delete(), (message.reply_text("photo added successfully") if not current_task.quiet else asyncio.sleep(0))
+            )
+            LOGGER.debug("image added to proposal queue")
+        else:
+            await asyncio.gather(
+                callback.answer("cancelled/timed-out"),
+                message.delete(),
+            )
+
     if "remove" in callback.data:
         file_object = await current_task.find_files(ext_id)
         if file_object in current_task.temp_files:
