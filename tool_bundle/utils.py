@@ -11,20 +11,10 @@ from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
 from worker import Worker  # pylint:disable=import-error
 from pikepdf import Pdf
-from typing import List
+from typing import List, Dict
 from PIL import Image
 import asyncio
 import os
-
-
-class Files(object):
-    def __init__(self, file_id: int, path: str):
-        self.file_id = file_id
-        self.path = path
-
-    def __del__(self):
-        if os.path.isfile(self.path):
-            os.remove(self.path)
 
 
 class PdfTask(object):
@@ -35,9 +25,9 @@ class PdfTask(object):
         # current working directory for each tasks ( will be allocated by method `file_allocator` ).
         self.cwd = None
         # downloaded temporary files which are waiting for user confirmation to be added in proposed_files.
-        self.temp_files: List[Files] = []
+        self.temp_files: Dict[int, str] = {}
         # files that will be going to output.
-        self.proposed_files: List[Files] = []
+        self.proposed_files: List[str] = []
         # default filename for tasks.
         self.output = "output"
         # 0-pending, 1-finished, 2-failed
@@ -50,8 +40,8 @@ class PdfTask(object):
         self.direct = False
 
     def __del__(self):
-        for fs in self.temp_files + self.proposed_files:
-            fs.__del__()
+        for files in list(self.temp_files.values()) + self.proposed_files:
+            os.remove(files)
         if os.path.isfile(self.output):
             os.remove(self.output)
 
@@ -64,12 +54,6 @@ class PdfTask(object):
             os.mkdir(proposed_cwd)
         self.cwd = proposed_cwd
         await asyncio.sleep(0.001)
-
-    async def find_files(self, file_id: int) -> Files:
-        """find `File` objects in temp_files list using file_id."""
-        data = [x for x in self.temp_files if x.file_id == file_id]
-        if len(data) > 0:
-            return data[0]
 
     async def add_handlers(self, client: Client) -> None:
         """add handler to Client according to the tasks."""
@@ -121,7 +105,7 @@ class Merge(PdfTask):
         super().__init__(chat_id, message_id)
 
     async def process(self):
-        pdfs: List[Pdf] = [Pdf.open(x.path) for x in self.proposed_files]
+        pdfs: List[Pdf] = [Pdf.open(x) for x in self.proposed_files]
         source = pdfs.pop(0)
         for pdf in pdfs:
             source.pages.extend(pdf.pages)
@@ -145,15 +129,15 @@ class Merge(PdfTask):
         """handler to determine photos under make task."""
         current_task: Merge = Worker.tasks.get(message.chat.id)
         if current_task is not None and message.document and message.document.mime_type == "application/pdf":
-            location = f"{current_task.cwd}/{message.message_id}.pdf"
+            location = f"{current_task.cwd}{message.message_id}.pdf"
             await message.download(location)
             if current_task.direct:
-                current_task.proposed_files.append(Files(message.message_id, location))
+                current_task.proposed_files.append(location)
                 await asyncio.gather(
                     message.delete(), (message.reply_text("pdf added successfully") if not current_task.quiet else asyncio.sleep(0))
                 )
                 return
-            current_task.temp_files.append(Files(message.message_id, location))
+            current_task.temp_files[message.message_id] = location
             await message.reply_document(
                 document=location,
                 reply_markup=InlineKeyboardMarkup(
@@ -173,7 +157,7 @@ class MakePdf(PdfTask):
         super().__init__(chat_id, message_id)
 
     async def process(self):
-        images: List[Image] = [Image.open(x.path) for x in self.proposed_files]
+        images: List[Image] = [Image.open(x) for x in self.proposed_files]
         self.output = self.cwd + self.output + ".pdf"
         primary = images.pop(0)
         await asyncio.sleep(0.001)
@@ -201,15 +185,15 @@ class MakePdf(PdfTask):
         """handler to determine photos under make task."""
         current_task: MakePdf = Worker.tasks.get(message.chat.id)
         if current_task is not None and message.photo:
-            location = f"{current_task.cwd}/{message.message_id}.jpeg"
+            location = f"{current_task.cwd}{message.message_id}.jpeg"
             await message.download(location)
             if current_task.direct:
-                current_task.proposed_files.append(Files(message.message_id, location))
+                current_task.proposed_files.append(location)
                 await asyncio.gather(
                     message.delete(), (message.reply_text("photo added successfully") if not current_task.quiet else asyncio.sleep(0))
                 )
                 return
-            current_task.temp_files.append(Files(message.message_id, location))
+            current_task.temp_files[message.message_id] = location
             await message.reply_photo(
                 photo=location,
                 reply_markup=InlineKeyboardMarkup(

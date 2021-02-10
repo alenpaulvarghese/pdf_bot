@@ -1,4 +1,4 @@
-from tool_bundle.utils import MakePdf, Merge  # pylint:disable=import-error
+from tool_bundle.utils import PdfTask, MakePdf, Merge  # pylint:disable=import-error
 from pyrogram import filters
 from worker import Worker  # pylint:disable=import-error
 from PIL import Image
@@ -72,7 +72,7 @@ async def merge(client: Worker, message: Message):
 @Worker.on_callback_query()
 async def callback_handler(_, callback: CallbackQuery):
     message: Message = callback.message
-    current_task = Worker.tasks.get(message.chat.id)
+    current_task: PdfTask = Worker.tasks.get(message.chat.id)
     ext_id = int(callback.data.split(":", 1)[0])
     if current_task is None:
         await asyncio.gather(
@@ -82,17 +82,17 @@ async def callback_handler(_, callback: CallbackQuery):
         return
     if "rotate" in callback.data:
         degree = int(callback.data.split(":", 2)[2])
-        file_path = (await current_task.find_files(ext_id)).path
+        file_path = current_task.temp_files.get(ext_id)
         temporary_image = await rotate_image(file_path, degree)
         await message.edit_media(
             InputMediaPhoto(temporary_image), reply_markup=message.reply_markup
         )
     elif "insert" in callback.data:
-        file_object = await current_task.find_files(ext_id)
-        print(file_object)
-        if file_object is not None and file_object in current_task.temp_files:
-            current_task.temp_files.remove(file_object)
-            current_task.proposed_files.append(file_object)
+        file_path = None
+        if ext_id in current_task.temp_files:
+            file_path = current_task.temp_files.pop(ext_id)
+        if file_path is not None:
+            current_task.proposed_files.append(file_path)
             await asyncio.gather(
                 message.delete(), (message.reply_text("photo added successfully") if not current_task.quiet else asyncio.sleep(0))
             )
@@ -104,8 +104,6 @@ async def callback_handler(_, callback: CallbackQuery):
             )
 
     if "remove" in callback.data:
-        file_object = await current_task.find_files(ext_id)
-        if file_object in current_task.temp_files:
-            current_task.temp_files.remove(file_object)
+        current_task.temp_files.pop(ext_id)
         await message.delete()
         LOGGER.debug("image removed from temporary queue")

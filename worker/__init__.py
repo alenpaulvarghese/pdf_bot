@@ -31,6 +31,7 @@ class Worker(Client):
                         single_task.status = 2
                     finally:
                         Worker.process_queue.remove(single_task)
+                        Worker.tasks.pop(single_task.chat_id)
                         await asyncio.sleep(5)
             else:
                 await asyncio.sleep(1)
