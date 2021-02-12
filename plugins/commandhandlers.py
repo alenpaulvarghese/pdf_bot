@@ -24,6 +24,7 @@ async def task_checker(message: Message) -> bool:
     if message.chat.id in Worker.tasks:
         await message.reply_text(
             "**cancel** existing task?",
+            quote=True,
             reply_markup=InlineKeyboardMarkup(
                 [
                     [
@@ -51,13 +52,12 @@ async def rotate_image(file_path: str, degree: int) -> str:
 async def merge(client: Worker, message: Message):
     if await task_checker(message):
         return
-    is_merge = message.command[0] == "merge"
+    is_merge = "merge" in message.command[0]
     await message.reply_text(
         f"Now send me the {'pdf files' if is_merge else 'photos'}",
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[[KeyboardButton("Done"), KeyboardButton("Cancel")]],
             resize_keyboard=True,
-            one_time_keyboard=True,
         ),
     )
     new_task = (Merge if is_merge else MakePdf)(message.chat.id, message.message_id)
@@ -87,7 +87,7 @@ async def merge(client: Worker, message: Message):
 
 
 @Worker.on_callback_query()
-async def callback_handler(_, callback: CallbackQuery):
+async def callback_handler(client: Worker, callback: CallbackQuery):
     message: Message = callback.message
     current_task: PdfTask = Worker.tasks.get(message.chat.id)
     if current_task is None:
@@ -95,50 +95,50 @@ async def callback_handler(_, callback: CallbackQuery):
             callback.answer("cancelled/timed-out"),
             message.delete(),
         )
-        return
-    if "rotate" in callback.data:
-        ext_id = int(callback.data.split(":", 1)[0])
-        degree = int(callback.data.split(":", 2)[2])
-        file_path = current_task.temp_files.get(ext_id)
-        temporary_image = await rotate_image(file_path, degree)
-        await message.edit_media(
-            InputMediaPhoto(temporary_image), reply_markup=message.reply_markup
-        )
-    elif "insert" in callback.data:
-        ext_id = int(callback.data.split(":", 1)[0])
-        file_path = None
-        if ext_id in current_task.temp_files:
-            file_path = current_task.temp_files.pop(ext_id)
-        if file_path is not None:
-            current_task.proposed_files.append(file_path)
-            await asyncio.gather(
-                message.delete(),
-                (
-                    message.reply_text("photo added successfully")
-                    if not current_task.quiet
-                    else asyncio.sleep(0)
-                ),
-            )
-            LOGGER.debug("image added to proposal queue")
-        else:
+    elif (
+        "rotate" in callback.data
+        or "insert" in callback.data
+        or "remove" in callback.data
+    ):
+        file_id = int(callback.data.split(":", 1)[0])
+        file_path = current_task.temp_files.get(file_id)
+        if file_path is None:
             await asyncio.gather(
                 callback.answer("cancelled/timed-out"),
                 message.delete(),
             )
+        elif "rotate" in callback.data:
+            degree = int(callback.data.split(":", 2)[2])
+            temporary_image = await rotate_image(file_path, degree)
+            await message.edit_media(
+                InputMediaPhoto(temporary_image), reply_markup=message.reply_markup
+            )
+        elif "insert" in callback.data:
+            if file_path is not None:
+                current_task.temp_files.pop(file_id)
+                current_task.proposed_files.append(file_path)
+                await asyncio.gather(
+                    message.delete(),
+                    (
+                        message.reply_text("photo added successfully")
+                        if not current_task.quiet
+                        else asyncio.sleep(0)
+                    ),
+                )
+                LOGGER.debug("image added to proposal queue")
+        elif "remove" in callback.data:
+            current_task.temp_files.pop(file_id)
+            await message.delete()
+            LOGGER.debug("image removed from temporary queue")
 
-    if "remove" in callback.data:
-        ext_id = int(callback.data.split(":", 1)[0])
-        current_task.temp_files.pop(ext_id)
-        await message.delete()
-        LOGGER.debug("image removed from temporary queue")
-
-    if callback.data == "rm_task":
+    elif callback.data == "rm_task":
         Worker.tasks.pop(message.chat.id)
-        current_task.__del__()
         await asyncio.gather(
-            message.reply_text("**task** removed", reply_markup=ReplyKeyboardRemove()),
+            message.reply_text("**Task** cancelled", reply_markup=ReplyKeyboardRemove()),
             message.delete(),
         )
+        message.reply_to_message.command = message.reply_to_message.text.split(" ")
+        await merge(client, message.reply_to_message)
 
-    if callback.data == "del":
+    elif callback.data == "del":
         await message.delete()
