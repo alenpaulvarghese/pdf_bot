@@ -1,14 +1,17 @@
+# (c) AlenPaulVarghese
+# -*- coding: utf-8 -*-
+
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
-from scaffold import PdfTask  # pylint:disable=import-error
+from scaffold import PdfTask1  # pylint:disable=import-error
 from worker import Worker  # pylint:disable=import-error
 from typing import List
 from PIL import Image
 import asyncio
 
 
-class MakePdf(PdfTask):
+class MakePdf(PdfTask1):
     def __init__(self, chat_id: int, message_id: int):
         super().__init__(chat_id, message_id)
 

@@ -7,7 +7,7 @@ import asyncio
 import os
 
 
-class PdfTask(object):
+class PdfTask1(object):
     def __init__(self, chat_id: int, message_id: int):
         # chat_id is used to identify each task message_id is used to allocate folders.
         self.chat_id = chat_id
@@ -49,7 +49,7 @@ class PdfTask(object):
         """add handler to Client according to the tasks."""
         client.add_handler(
             MessageHandler(
-                PdfTask.command_handler,
+                PdfTask1.command_handler,
                 filters.text,
             ),
             group=0,
@@ -58,7 +58,7 @@ class PdfTask(object):
     @staticmethod
     async def command_handler(_, message: Message):
         """custom handler made during task creation."""
-        current_task: PdfTask = Worker.tasks.get(message.chat.id)
+        current_task: PdfTask1 = Worker.tasks.get(message.chat.id)
         if message.text == "Cancel":
             if message.chat.id in Worker.tasks:
                 Worker.tasks.pop(message.chat.id)
