@@ -1,4 +1,4 @@
-from tool_bundle.utils import PdfTask, MakePdf, Merge  # pylint:disable=import-error
+from tools import MakePdf, Merge  # pylint:disable=import-error
 from pyrogram import filters
 from worker import Worker  # pylint:disable=import-error
 from PIL import Image
@@ -89,7 +89,7 @@ async def merge(client: Worker, message: Message):
 @Worker.on_callback_query()
 async def callback_handler(client: Worker, callback: CallbackQuery):
     message: Message = callback.message
-    current_task: PdfTask = Worker.tasks.get(message.chat.id)
+    current_task = Worker.tasks.get(message.chat.id)
     if current_task is None:
         await asyncio.gather(
             callback.answer("cancelled/timed-out"),
@@ -134,7 +134,9 @@ async def callback_handler(client: Worker, callback: CallbackQuery):
     elif callback.data == "rm_task":
         Worker.tasks.pop(message.chat.id)
         await asyncio.gather(
-            message.reply_text("**Task** cancelled", reply_markup=ReplyKeyboardRemove()),
+            message.reply_text(
+                "**Task** cancelled", reply_markup=ReplyKeyboardRemove()
+            ),
             message.delete(),
         )
         message.reply_to_message.command = message.reply_to_message.text.split(" ")

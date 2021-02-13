@@ -14,5 +14,6 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(
-                sig, lambda sig=sig: loop.create_task(shutdown(primary_engine)))
+            sig, lambda sig=sig: loop.create_task(shutdown(primary_engine))
+        )
     loop.run_until_complete(primary_engine.work())
