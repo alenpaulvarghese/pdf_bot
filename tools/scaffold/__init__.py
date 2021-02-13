@@ -1,3 +1,6 @@
+# (c) AlenPaulVarghese
+# -*- coding: utf-8 -*-
+
 from pyrogram.types import Message, ReplyKeyboardRemove
 from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
@@ -7,35 +10,19 @@ import asyncio
 import os
 
 
-class PdfTask1(object):
+class GeneralTask(object):
     def __init__(self, chat_id: int, message_id: int):
         # chat_id is used to identify each task message_id is used to allocate folders.
         self.chat_id = chat_id
         self.message_id = message_id
         # current working directory for each tasks ( will be allocated by method `file_allocator` ).
         self.cwd = None
-        # downloaded temporary files which are waiting for user confirmation to be added in proposed_files.
-        self.temp_files: Dict[int, str] = {}
-        # files that will be going to output.
-        self.proposed_files: List[str] = []
         # default filename for tasks.
         self.output = "output"
         # 0-pending, 1-finished, 2-failed
         self.status = 0
         # string for identifying exceptions if there exist any.
         self.error_code = "something went wrong"
-        # quiet True if -q|-quiet flag is used else false; reduces info messages.
-        self.quiet = False
-        # for flag -d|-direct; send files directly to proposed queue without user approval.
-        self.direct = False
-
-    def __del__(self):
-        for files in list(self.temp_files.values()) + self.proposed_files:
-            os.remove(files)
-        self.proposed_files.clear()
-        self.temp_files.clear()
-        if os.path.isfile(self.output):
-            os.remove(self.output)
 
     async def file_allocator(self):
         """assign working directory for a task."""
@@ -46,6 +33,27 @@ class PdfTask1(object):
             os.mkdir(proposed_cwd)
         self.cwd = proposed_cwd
         await asyncio.sleep(0.001)
+
+
+class PdfTask1(GeneralTask):
+    def __init__(self, chat_id: int, message_id: int):
+        # downloaded temporary files which are waiting for user confirmation to be added in proposed_files.
+        self.temp_files: Dict[int, str] = {}
+        # files that will be going to output.
+        self.proposed_files: List[str] = []
+        # quiet True if -q|-quiet flag is used else false; reduces info messages.
+        self.quiet = False
+        # for flag -d|-direct; send files directly to proposed queue without user approval.
+        self.direct = False
+        super().__init__(chat_id, message_id)
+
+    def __del__(self):
+        for files in list(self.temp_files.values()) + self.proposed_files:
+            os.remove(files)
+        self.proposed_files.clear()
+        self.temp_files.clear()
+        if os.path.isfile(self.output):
+            os.remove(self.output)
 
     async def add_handlers(self, client: Client) -> None:
         """add handler to Client according to the tasks."""
@@ -92,3 +100,18 @@ class PdfTask1(object):
                     elif current_task.status == 1:
                         await message.reply_document(current_task.output)
                         current_task.__del__()
+
+
+class PdfTask2(GeneralTask):
+    def __init__(self, chat_id: int, message_id: int):
+        # input file send from client side
+        self.input_file = ""
+        # user input which includes password or page range
+        self.user_input = ""
+
+        super().__init__(chat_id, message_id)
+
+    def __del__(self):
+        for each_file in [self.input_file, self.output]:
+            if os.path.exists(each_file):
+                os.remove(each_file)
