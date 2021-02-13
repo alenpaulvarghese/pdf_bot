@@ -8,7 +8,7 @@ from pyrogram.types import (
 )
 from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
-from scaffold import PdfTask1  # pylint:disable=import-error
+from tools.scaffold import PdfTask1  # pylint:disable=import-error
 from worker import Worker  # pylint:disable=import-error
 from pikepdf import Pdf
 from typing import List

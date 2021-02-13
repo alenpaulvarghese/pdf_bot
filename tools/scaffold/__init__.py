@@ -32,6 +32,8 @@ class PdfTask1(object):
     def __del__(self):
         for files in list(self.temp_files.values()) + self.proposed_files:
             os.remove(files)
+        self.proposed_files.clear()
+        self.temp_files.clear()
         if os.path.isfile(self.output):
             os.remove(self.output)
 

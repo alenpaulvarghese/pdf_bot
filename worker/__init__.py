@@ -12,7 +12,7 @@ class Worker(Client):
 
     def __init__(self):
         super().__init__(
-            "pdf bot",
+            "pdf-bot",
             bot_token=my.BOT_TOKEN,
             api_id=my.API_ID,
             api_hash=my.API_HASH,
@@ -33,5 +33,6 @@ class Worker(Client):
                         Worker.process_queue.remove(single_task)
                         Worker.tasks.pop(single_task.chat_id)
                         await asyncio.sleep(5)
+                        print("process finished")
             else:
                 await asyncio.sleep(1)

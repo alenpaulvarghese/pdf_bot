@@ -4,7 +4,7 @@
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
-from scaffold import PdfTask1  # pylint:disable=import-error
+from tools.scaffold import PdfTask1  # pylint:disable=import-error
 from worker import Worker  # pylint:disable=import-error
 from typing import List
 from PIL import Image
