@@ -115,3 +115,7 @@ class PdfTask2(GeneralTask):
         for each_file in [self.input_file, self.output]:
             if os.path.exists(each_file):
                 os.remove(each_file)
+
+    async def allocate_and_download(self, message: Message):
+        await self.file_allocator()
+        self.input_file = await message.download(self.cwd)

@@ -1,4 +1,4 @@
-from tools import MakePdf, Merge  # pylint:disable=import-error
+from tools import MakePdf, Merge, Encrypter  # pylint:disable=import-error
 from pyrogram import filters
 from worker import Worker  # pylint:disable=import-error
 from PIL import Image
@@ -48,6 +48,28 @@ async def rotate_image(file_path: str, degree: int) -> str:
     return file_path
 
 
+@Worker.on_message(filters.command(["encrypt"]))
+async def encrypt_handler(_, message: Message) -> None:
+    if await task_checker(message):
+        return
+    new_task = Encrypter(message.chat.id, message.message_id, message.command[1])
+    Worker.tasks[message.chat.id] = new_task
+    await new_task.allocate_and_download(message.reply_to_message)
+    await message.reply_text("**processing...**",)
+    Worker.process_queue.append(new_task)
+    while new_task.status == 0:
+        await asyncio.sleep(1.2)
+    else:
+        if new_task.status == 2:
+            await message.reply_text(
+                f"**Task failed: `{new_task.error_code}`**"
+            )
+        elif new_task.status == 1:
+            print(new_task.output)
+            await message.reply_document(new_task.output)
+            new_task.__del__()
+
+
 @Worker.on_message(filters.command(["merge", "make"]))
 async def merge(client: Worker, message: Message):
     if await task_checker(message):
@@ -90,7 +112,9 @@ async def merge(client: Worker, message: Message):
 async def callback_handler(client: Worker, callback: CallbackQuery):
     message: Message = callback.message
     current_task = Worker.tasks.get(message.chat.id)
-    if current_task is None:
+    if callback.data == "help_button":
+        await message.edit("")
+    elif current_task is None:
         await asyncio.gather(
             callback.answer("cancelled/timed-out"),
             message.delete(),
