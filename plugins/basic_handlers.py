@@ -19,18 +19,12 @@ async def start_handler(_, message: Message) -> None:
         "**features:**\n"
         "~ Convert images to PDF\n"
         "~ Merge PDF files ",
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("help", "page-0")]]
-        ),
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("help", "page-0")]]),
     )
 
 
 @Worker.on_callback_query(
-    filters.create(
-        lambda _, __, callback: True
-        if "page" in callback.data
-        else False
-    ),
+    filters.create(lambda _, __, callback: True if "page" in callback.data else False),
     group=0,
 )
 async def help_cbhandler(_, callback: CallbackQuery) -> None:

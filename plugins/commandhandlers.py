@@ -52,20 +52,30 @@ async def rotate_image(file_path: str, degree: int) -> str:
 async def encrypt_handler(_, message: Message) -> None:
     if await task_checker(message):
         return
-    new_task = Encrypter(message.chat.id, message.message_id, message.command[1])
+    if message.reply_to_message is None or (
+        message.document and message.document.mime_type != "document/pdf"
+    ):
+        await message.reply("Please reply to a PDF file")
+        return
+    if len(message.command) < 1:
+        await message.reply("**usage:** /encrypt password`")
+        return
+    new_task = Encrypter(
+        message.chat.id, message.message_id, " ".join(message.command[1:])
+    )
     Worker.tasks[message.chat.id] = new_task
+    status = await message.reply_text("**downloading...**")
     await new_task.allocate_and_download(message.reply_to_message)
-    await message.reply_text("**processing...**",)
+    await status.edit(
+        "**processing...**",
+    )
     Worker.process_queue.append(new_task)
     while new_task.status == 0:
         await asyncio.sleep(1.2)
     else:
         if new_task.status == 2:
-            await message.reply_text(
-                f"**Task failed: `{new_task.error_code}`**"
-            )
+            await message.reply_text(f"**Task failed: `{new_task.error_code}`**")
         elif new_task.status == 1:
-            print(new_task.output)
             await message.reply_document(new_task.output)
             new_task.__del__()
 

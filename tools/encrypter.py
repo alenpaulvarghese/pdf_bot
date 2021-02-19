@@ -15,16 +15,19 @@ class Encrypter(PdfTask2):
         cmd = [
             "qpdf",
             "--encrypt",
-            f"{self.user_input}",
-            f"{self.user_input}",
+            f"'{self.user_input}'",
+            f"'{self.user_input}'",
             "128",
             "--",
             f"{self.input_file}",
             f"{self.output}",
         ]
+        print("exec: {}".format(" ".join(cmd)))
         proc = await asyncio.create_subprocess_shell(
             " ".join(cmd),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        await proc.communicate()
+        _, stderr = await proc.communicate()
+        if stderr:
+            raise Exception(stderr.decode("utf-8"))

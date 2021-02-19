@@ -118,4 +118,6 @@ class PdfTask2(GeneralTask):
 
     async def allocate_and_download(self, message: Message):
         await self.file_allocator()
-        self.input_file = await message.download(self.cwd)
+        self.input_file = await message.download(
+            self.cwd + str(self.message_id) + ".pdf"
+        )
