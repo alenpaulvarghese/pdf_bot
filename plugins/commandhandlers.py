@@ -1,4 +1,4 @@
-from tools import MakePdf, Merge, Encrypter  # pylint:disable=import-error
+from tools import MakePdf, Merge, Encrypter, Decypter  # pylint:disable=import-error
 from pyrogram import filters
 from worker import Worker  # pylint:disable=import-error
 from PIL import Image
@@ -12,12 +12,8 @@ from pyrogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
-import logging
+from plugins.logger import LOG_  # pylint:disable=import-error
 import asyncio
-
-
-LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(10)
 
 
 async def task_checker(message: Message) -> bool:
@@ -44,11 +40,11 @@ async def rotate_image(file_path: str, degree: int) -> str:
     rotated_image = origin.rotate(degree, expand=True)
     await asyncio.sleep(0.001)
     rotated_image.save(file_path)
-    LOGGER.debug(f"Image rotated and saved to --> {file_path}")
+    LOG_.debug(f"Image rotated and saved to --> {file_path}")
     return file_path
 
 
-@Worker.on_message(filters.command(["encrypt"]))
+@Worker.on_message(filters.command(["encrypt", "decrypt"]))
 async def encrypt_handler(_, message: Message) -> None:
     if await task_checker(message):
         return
@@ -58,9 +54,11 @@ async def encrypt_handler(_, message: Message) -> None:
         await message.reply("Please reply to a PDF file")
         return
     if len(message.command) < 1:
-        await message.reply("**usage:** /encrypt password`")
+        await message.reply(
+            f"**usage:** {'/encrypt' if message.command[0] == 'encrypt' else '/decrypt'} password`"
+        )
         return
-    new_task = Encrypter(
+    new_task = (Encrypter if message.command[0] == "encrypt" else Decypter)(
         message.chat.id, message.message_id, " ".join(message.command[1:])
     )
     Worker.tasks[message.chat.id] = new_task
@@ -159,11 +157,11 @@ async def callback_handler(client: Worker, callback: CallbackQuery):
                         else asyncio.sleep(0)
                     ),
                 )
-                LOGGER.debug("image added to proposal queue")
+                LOG_.debug("image added to proposal queue")
         elif "remove" in callback.data:
             current_task.temp_files.pop(file_id)
             await message.delete()
-            LOGGER.debug("image removed from temporary queue")
+            LOG_.debug("image removed from temporary queue")
 
     elif callback.data == "rm_task":
         Worker.tasks.pop(message.chat.id)
