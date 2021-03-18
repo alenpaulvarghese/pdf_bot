@@ -8,11 +8,11 @@ from pyrogram.types import (
     InlineKeyboardMarkup,
 )
 from pyrogram import filters
-from worker import Worker  # pylint:disable=import-error
+from pdfbot import Pdfbot  # pylint:disable=import-error
 
 
 # start command handler
-@Worker.on_message(filters.command(["start"]))
+@Pdfbot.on_message(filters.command(["start"]))
 async def start_handler(_, message: Message) -> None:
     await message.reply(
         "Hi 👋, I am a easy pdf utility bot\n\n"
@@ -23,7 +23,7 @@ async def start_handler(_, message: Message) -> None:
     )
 
 
-@Worker.on_callback_query(
+@Pdfbot.on_callback_query(
     filters.create(lambda _, __, callback: True if "page" in callback.data else False),
     group=0,
 )
