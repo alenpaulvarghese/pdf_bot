@@ -1,7 +1,14 @@
-from tools import MakePdf, Merge, Encrypter, Decypter  # pylint:disable=import-error
+from tools.general import _task_checker  # pylint:disable=import-error
 from pyrogram import filters
-from worker import Worker  # pylint:disable=import-error
+from pdfbot import Pdfbot  # pylint:disable=import-error
 from PIL import Image
+from tools import (
+    MakePdf,
+    Merge,
+    Encrypter,
+    Decypter,
+    Extractor,
+)  # pylint:disable=import-error
 from pyrogram.types import (
     Message,
     CallbackQuery,
@@ -9,34 +16,14 @@ from pyrogram.types import (
     InputMediaPhoto,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
 )
 from plugins.logger import LOG_  # pylint:disable=import-error
 import asyncio
 
 
-async def task_checker(message: Message) -> bool:
-    if message.chat.id in Worker.tasks:
-        await message.reply_text(
-            "**cancel** existing task?",
-            quote=True,
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton("yes", "rm_task"),
-                        InlineKeyboardButton("no", "del"),
-                    ]
-                ]
-            ),
-        )
-        return True
-    return False
-
-
 async def rotate_image(file_path: str, degree: int) -> str:
     """rotate images from input file_path and degree"""
-    origin = Image.open(file_path)
+    origin: Image = Image.open(file_path)
     rotated_image = origin.rotate(degree, expand=True)
     await asyncio.sleep(0.001)
     rotated_image.save(file_path)
@@ -44,10 +31,35 @@ async def rotate_image(file_path: str, degree: int) -> str:
     return file_path
 
 
-@Worker.on_message(filters.command(["encrypt", "decrypt"]))
-async def encrypt_handler(_, message: Message) -> None:
-    if await task_checker(message):
+@Pdfbot.on_message(filters.command(["extract"]) & filters.create(_task_checker))
+async def extract_handler(client: Pdfbot, message: Message) -> None:
+    new_task = Extractor(
+        client, message.chat.id, message.message_id, " ".join(message.command[1:])
+    )
+    client.task_pool.add_task(message.chat.id, new_task)
+    if not await new_task.parse_input():
         return
+    status = await message.reply_text("**downloading...**")
+    await new_task.allocate_and_download(message.reply_to_message)
+    await status.edit(
+        "**processing...**",
+    )
+    client.process_pool.new_task(new_task)
+    while new_task.status == 0:
+        await asyncio.sleep(1.2)
+    else:
+        if new_task.status == 2:
+            await message.reply_text(f"**Task failed: `{new_task.error_code}`**")
+        elif new_task.status == 1:
+            await message.reply_document(new_task.output)
+            new_task.__del__()
+    client.task_pool.remove_task(message.chat.id)
+
+
+@Pdfbot.on_message(
+    filters.command(["encrypt", "decrypt"]) & filters.create(_task_checker)
+)
+async def encrypt_handler(client: Pdfbot, message: Message) -> None:
     if message.reply_to_message is None or (
         message.document and message.document.mime_type != "document/pdf"
     ):
@@ -61,13 +73,13 @@ async def encrypt_handler(_, message: Message) -> None:
     new_task = (Encrypter if message.command[0] == "encrypt" else Decypter)(
         message.chat.id, message.message_id, " ".join(message.command[1:])
     )
-    Worker.tasks[message.chat.id] = new_task
+    client.task_pool.add_task(message.chat.id, new_task)
     status = await message.reply_text("**downloading...**")
     await new_task.allocate_and_download(message.reply_to_message)
     await status.edit(
         "**processing...**",
     )
-    Worker.process_queue.append(new_task)
+    client.process_pool.new_task(new_task)
     while new_task.status == 0:
         await asyncio.sleep(1.2)
     else:
@@ -76,12 +88,11 @@ async def encrypt_handler(_, message: Message) -> None:
         elif new_task.status == 1:
             await message.reply_document(new_task.output)
             new_task.__del__()
+    client.task_pool.remove_task(message.chat.id)
 
 
-@Worker.on_message(filters.command(["merge", "make"]))
-async def merge(client: Worker, message: Message):
-    if await task_checker(message):
-        return
+@Pdfbot.on_message(filters.command(["merge", "make"]) & filters.create(_task_checker))
+async def merge(client: Pdfbot, message: Message):
     is_merge = "merge" in message.command[0]
     await message.reply_text(
         f"Now send me the {'pdf files' if is_merge else 'photos'}",
@@ -91,7 +102,7 @@ async def merge(client: Worker, message: Message):
         ),
     )
     new_task = (Merge if is_merge else MakePdf)(message.chat.id, message.message_id)
-    Worker.tasks[message.chat.id] = new_task
+    client.task_pool.add_task(message.chat.id, new_task)
     await asyncio.gather(
         new_task.file_allocator(),
         new_task.add_handlers(client),
@@ -116,10 +127,10 @@ async def merge(client: Worker, message: Message):
                 new_task.output = filename
 
 
-@Worker.on_callback_query()
-async def callback_handler(client: Worker, callback: CallbackQuery):
+@Pdfbot.on_callback_query()
+async def callback_handler(client: Pdfbot, callback: CallbackQuery):
     message: Message = callback.message
-    current_task = Worker.tasks.get(message.chat.id)
+    current_task = client.task_pool.get_task(message.chat.id)
     if callback.data == "help_button":
         await message.edit("")
     elif current_task is None:
@@ -140,6 +151,7 @@ async def callback_handler(client: Worker, callback: CallbackQuery):
                 message.delete(),
             )
         elif "rotate" in callback.data:
+            await callback.answer("rotating please wait")
             degree = int(callback.data.split(":", 2)[2])
             temporary_image = await rotate_image(file_path, degree)
             await message.edit_media(
@@ -164,15 +176,13 @@ async def callback_handler(client: Worker, callback: CallbackQuery):
             LOG_.debug("image removed from temporary queue")
 
     elif callback.data == "rm_task":
-        Worker.tasks.pop(message.chat.id)
+        client.task_pool.remove_task(message.chat.id)
         await asyncio.gather(
             message.reply_text(
                 "**Task** cancelled", reply_markup=ReplyKeyboardRemove()
             ),
             message.delete(),
         )
-        message.reply_to_message.command = message.reply_to_message.text.split(" ")
-        await merge(client, message.reply_to_message)
 
     elif callback.data == "del":
         await message.delete()
