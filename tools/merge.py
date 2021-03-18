@@ -9,7 +9,6 @@ from pyrogram.types import (
 from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
 from tools.scaffold import PdfTask1  # pylint:disable=import-error
-from worker import Worker  # pylint:disable=import-error
 from pikepdf import Pdf
 from typing import List
 import asyncio
@@ -38,14 +37,14 @@ class Merge(PdfTask1):
                     lambda _, __, m: m.document
                     and m.document.mime_type == "application/pdf"
                 )
-                & filters.create(lambda _, __, m: m.chat.id in Worker.tasks),
+                & filters.create(lambda _, client, message: client.task_pool.check_task(message.chat.id)),
             )
         )
 
     @staticmethod
-    async def command_handler(_, message: Message):
+    async def command_handler(client, message: Message):
         """handler to determine photos under make task."""
-        current_task: Merge = Worker.tasks.get(message.chat.id)
+        current_task = client.task_pool.get_task(message.chat.id)
         if (
             current_task is not None
             and message.document

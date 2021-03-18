@@ -5,7 +5,6 @@ from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
 from tools.scaffold import PdfTask1  # pylint:disable=import-error
-from worker import Worker  # pylint:disable=import-error
 from typing import List
 from PIL import Image
 import asyncio
@@ -35,14 +34,18 @@ class MakePdf(PdfTask1):
             MessageHandler(
                 self.command_handler,
                 filters.photo
-                & filters.create(lambda _, __, m: m.chat.id in Worker.tasks),
+                & filters.create(
+                    lambda _, client, message: client.task_pool.check_task(
+                        message.chat.id
+                    )
+                ),
             )
         )
 
     @staticmethod
-    async def command_handler(_, message: Message):
+    async def command_handler(client, message: Message):
         """handler to determine photos under make task."""
-        current_task: MakePdf = Worker.tasks.get(message.chat.id)
+        current_task = client.task_pool.get_task(message.chat.id)
         if current_task is not None and message.photo:
             location = f"{current_task.cwd}{message.message_id}.jpeg"
             await message.download(location)
