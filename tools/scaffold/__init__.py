@@ -5,22 +5,23 @@ from pyrogram.types import Message, ReplyKeyboardRemove
 from pyrogram.handlers import MessageHandler
 from pyrogram import Client, filters
 from typing import Dict, List
-from worker import Worker  # pylint:disable=import-error
 import asyncio
 import os
 
 
 class GeneralTask(object):
-    def __init__(self, chat_id: int, message_id: int):
+    def __init__(self, client: Client = None, chat_id: int = 0, message_id: int = 0):
         # chat_id is used to identify each task message_id is used to allocate folders.
         self.chat_id = chat_id
         self.message_id = message_id
         # current working directory for each tasks ( will be allocated by method `file_allocator` ).
-        self.cwd = None
+        self.cwd = ""
         # default filename for tasks.
         self.output = "output"
         # 0-pending, 1-finished, 2-failed
         self.status = 0
+        # client object reference
+        self.client: Client = client
         # string for identifying exceptions if there exist any.
         self.error_code = "something went wrong"
 
@@ -66,12 +67,11 @@ class PdfTask1(GeneralTask):
         )
 
     @staticmethod
-    async def command_handler(_, message: Message):
+    async def command_handler(client, message: Message):
         """custom handler made during task creation."""
-        current_task: PdfTask1 = Worker.tasks.get(message.chat.id)
+        current_task = client.task_pool.get_task(message.chat.id)
         if message.text == "Cancel":
-            if message.chat.id in Worker.tasks:
-                Worker.tasks.pop(message.chat.id)
+            client.task_pool.remove_task(message.chat.id)
             await message.reply_text(
                 "**Task cancelled**", reply_markup=ReplyKeyboardRemove()
             )
@@ -89,7 +89,7 @@ class PdfTask1(GeneralTask):
                     "**processing...**",
                     reply_markup=ReplyKeyboardRemove(),
                 )
-                Worker.process_queue.append(current_task)
+                client.process_pool.new_task(current_task)
                 while current_task.status == 0:
                     await asyncio.sleep(1.2)
                 else:
@@ -100,16 +100,17 @@ class PdfTask1(GeneralTask):
                     elif current_task.status == 1:
                         await message.reply_document(current_task.output)
                         current_task.__del__()
+                client.task_pool.remove_task(message.chat.id)
 
 
 class PdfTask2(GeneralTask):
-    def __init__(self, chat_id: int, message_id: int):
+    def __init__(self, client: Client = None, chat_id: int = 0, message_id: int = 0):
         # input file send from client side
         self.input_file = ""
         # user input which includes password or page range
         self.user_input = ""
 
-        super().__init__(chat_id, message_id)
+        super().__init__(client, chat_id, message_id)
 
     def __del__(self):
         for each_file in [self.input_file, self.output]:
