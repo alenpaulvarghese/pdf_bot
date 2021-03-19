@@ -1,0 +1,15 @@
+language_info:
+  flag: "🇺🇸"
+  code: en
+
+STRINGS:
+  help:
+    start: "Hi 👋, I am a easy pdf utility bot\n- __I am now under beta testing__\n - __open sourced after release__"
+    help: "**Available Operations**\n\n- [make](https://t.me/{bot}?start=makepdf)     :- create pdf files from images\n- [merge](https://t.me/{bot}?start=merge)   :- merge pdf files\n- [extract](https://t.me/{bot}?start=extract)  :- convert pdf to images\n- [encrypt](https://t.me/{bot}?start=encrypt) :- encrypt pdf files\n- [decrypt](https://t.me/{bot}?start=decrypt) :- decrypt pdf files"
+    makepdf: "**Image to PDF**\n\n**command:** /make\n\n**flags:**\n\t\t`-d` : send files directly to queue without user approval.\n\t\t`-q` : reduce info messages\n\n**Usage:**\n`/make [flags] custom_file_name`\n\n**Example: **\n`/make -d -q WORK`"
+    merge: "**Merge PDF Files**\n\n**command:** /merge\n\n**flags:**\n\t\t`-d` : send files directly to queue without user approval.\n\t\t`-q` : reduce info messages\n\n**Usage:**\n`/merge [flags] custom_file_name`\n\n**Example: **\n`/merge -d -q MERGED_WORK`"
+    encrypt: "**Encrypt PDF Files**\n\n__send as a reply to a pdf file__\n**command:** /encrypt\n\n**flags:**\n\t\t`-d` : send files directly to queue without user approval.\n\t\t`-q` : reduce info messages\n\n**Usage:**\n`/encrypt [flags] password custom_file_name`\n\n**Example: **\n`/encrypt -d -q pass123 ENCRYPTED_WORK`"
+    decrypt: "**Decrypt PDF Files**\n\n__send as a reply to a pdf file__\n**command:** /decrypt\n\n**flags:**\n\t\t`-d` : send files directly to queue without user approval.\n\t\t`-q` : reduce info messages\n\n**Usage:**\n`/decrypt [flags] password custom_file_name`\n\n**Example: **\n`/decrypt -d -q pass123 DECRYPTED_WORK`"
+    extract: "**PDF to Image**\n\n__send as a reply to a pdf file__\n**command:** /extract\n\n**supported arguments**:\n\t\t`/extract page_number`: extract one page as image\n\t\t`/extract start-end`: extract range of pages\n\n**flags:**\n\t\t`-d` : send files directly to queue without user approval.\n\t\t`-q` : reduce info messages\n\n**Usage:**\n`/extract [flags] page_number or range`\n\n**Example: **\n`/extract 4`\n`/extract 10-20`"
+  warnings:
+    filename_to_long: "**WARNING:** file name too long, reducing..."
