@@ -10,46 +10,68 @@ from pyrogram.types import (
 from pyrogram import filters
 from pdfbot import Pdfbot  # pylint:disable=import-error
 
+__help__ = ["makepdf", "merge", "encrypt", "decrypt", "extract"]
+
 
 # start command handler
 @Pdfbot.on_message(filters.command(["start"]))
-async def start_handler(_, message: Message) -> None:
+async def start_handler(client: Pdfbot, message: Message) -> None:
+    if len(message.command) > 1 and message.command[1] in __help__:
+        return_message = await message.reply_text("processing")
+        await help_cbhandler(
+            client,
+            CallbackQuery(
+                id=123,
+                client=client,
+                message=return_message,
+                chat_instance="-1234",
+                from_user=message.from_user,
+                data=f"page-{str(__help__.index(message.command[1]))}",
+            ),
+        )
+        return
     await message.reply(
-        "Hi 👋, I am a easy pdf utility bot\n\n"
-        "**features:**\n"
-        "~ Convert images to PDF\n"
-        "~ Merge PDF files ",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("help", "page-0")]]),
+        client.language["STRINGS"]["help"]["start"],
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("help", "page-help")]]
+        ),
     )
 
 
 @Pdfbot.on_callback_query(
-    filters.create(lambda _, __, callback: True if "page" in callback.data else False),
+    filters.create(lambda _, __, callback: "page" in callback.data),
     group=0,
 )
-async def help_cbhandler(_, callback: CallbackQuery) -> None:
-    if "page" in callback.data:
+async def help_cbhandler(client: Pdfbot, callback: CallbackQuery) -> None:
+    if callback.data == "page-close":
+        await callback.message.delete()
+
+    elif callback.data == "page-help":
+        await callback.message.edit(
+            client.language["STRINGS"]["help"]["help"].format(
+                bot=(await client.get_me()).username
+            ),
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("✖️", "page-close")]]
+            ),
+        )
+
+    elif "page" in callback.data:
         _, next_page = callback.data.split("-")
-        if next_page == "0":
-            await callback.message.edit(
-                """**Image to PDF**\n\n**command:** /make\n\n**flags:**\n
-    `-d` : send files directly to queue without user approval.
-    `-q` : reduce info messages\n
-**Usage:**\n`/make [flags] custom_file_name`\n
-**Example: **\n`/make -d -q WORK`""",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton(">>", "page-1")]]
-                ),
+        reply = InlineKeyboardMarkup([[], [InlineKeyboardButton("✖️", "page-close")]])
+        if int(next_page) != 0:
+            reply.inline_keyboard[0].append(
+                InlineKeyboardButton("<<", f"page-{str(int(next_page)-1)}")
             )
-        elif next_page == "1":
-            await callback.message.edit(
-                """**Merge PDF Files**\n\n**command:** /merge\n\n**flags:**\n
-    `-d` : send files directly to queue without user approval.
-    `-q` : reduce info messages\n
-**Usage:**\n`/merge [flags] custom_file_name`\n
-**Example: **\n`/merge -d -q MERGED_WORK`""",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("<<", "page-0")]]
-                ),
+
+        if not int(next_page) == len(__help__) - 1:
+            reply.inline_keyboard[0].append(
+                InlineKeyboardButton(">>", f"page-{str(int(next_page)+1)}")
             )
-    await callback.answer()
+
+        await callback.message.edit(
+            client.language["STRINGS"]["help"][__help__[int(next_page)]],
+            reply_markup=reply,
+        ),
+    if not callback.id == 123:
+        await callback.answer()

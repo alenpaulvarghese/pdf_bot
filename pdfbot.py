@@ -1,6 +1,7 @@
 from pool import Task, Worker
 from pyrogram import Client
 from creds import my
+import yaml
 
 
 class Pdfbot(Client):
@@ -14,8 +15,11 @@ class Pdfbot(Client):
         )
         self.process_pool = Worker()
         self.task_pool = Task()
+        self.languages: dict = {}
 
     async def start(self):
+        with open("locale/en.yaml", "r") as f:
+            self.language = yaml.load(f, Loader=yaml.CLoader)
         await super().start()
         await self.process_pool.start()
 
