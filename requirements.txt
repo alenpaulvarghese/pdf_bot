@@ -1,6 +1,7 @@
+pyyaml
+pillow
+pikepdf
 pyrogram
 tgcrypto
-Pillow
-pikepdf
 pylovepdf
 ghostscript
