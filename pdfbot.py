@@ -3,7 +3,7 @@ from pool import TaskPool, Worker
 from pyrogram import Client
 from typing import Optional
 from logger import logging
-from creds import my
+from config import Config
 import yaml
 
 _LOG = logging.getLogger(__name__)
@@ -13,9 +13,9 @@ class Pdfbot(Client):
     def __init__(self):
         super().__init__(
             session_name="pdf-bot",
-            bot_token=my.BOT_TOKEN,
-            api_id=my.API_ID,
-            api_hash=my.API_HASH,
+            bot_token=Config.BOT_TOKEN,
+            api_id=Config.API_ID,
+            api_hash=Config.API_HASH,
             plugins=dict(root="plugins"),
         )
         self.process_pool = Worker()
