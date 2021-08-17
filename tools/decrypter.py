@@ -1,26 +1,29 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from tools.scaffold import PdfTask2
-from plugins.logger import LOG_  # pylint:disable=import-error
+from tools.scaffold import AbstractTask
+from pathlib import Path
 import asyncio
 
 
-class Decypter(PdfTask2):
-    def __init__(self, chat_id: int, message_id: int, password: str):
+class Decrypter(AbstractTask):
+    def __init__(self, chat_id: int, message_id: int):
+        self.input_file: Path
+        self.password: str = ""
         super().__init__(chat_id, message_id)
-        self.user_input = password
+
+    def set_configuration(self, _path: Path, _pass: str) -> None:
+        self.input_file = _path
+        self.password = _pass
 
     async def process(self):
-        self.output = self.cwd + self.output + ".pdf"
         cmd = [
             "qpdf",
-            f"--password={self.user_input}",
+            f"--password={self.password}",
             "--decrypt",
             f"{self.input_file}",
-            f"{self.output}",
+            f"{self.cwd / self.filename}",
         ]
-        LOG_.debug("exec: {}".format(" ".join(cmd)))
         proc = await asyncio.create_subprocess_shell(
             " ".join(cmd),
             stdout=asyncio.subprocess.PIPE,

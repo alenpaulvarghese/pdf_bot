@@ -1,2 +1,2 @@
+from .task_pool import TaskPool  # noqa
 from .worker import Worker  # noqa
-from .tasks import Task  # noqa

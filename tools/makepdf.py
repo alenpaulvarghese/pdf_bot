@@ -1,78 +1,48 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
+from concurrent.futures import ThreadPoolExecutor
 from pyrogram.handlers import MessageHandler
-from pyrogram import Client, filters
-from tools.scaffold import PdfTask1  # pylint:disable=import-error
-from typing import List
-from PIL import Image
+from tools.scaffold import AbstractTask  # pylint:disable=import-error
+from PIL import Image as ImageModule
+from typing import List, Dict
+from pathlib import Path
 import asyncio
 
 
-class MakePdf(PdfTask1):
+class MakePdf(AbstractTask):
     def __init__(self, chat_id: int, message_id: int):
+        # downloaded temporary files which are waiting for user confirmation to be added in proposed_files.
+        self.temp_files: Dict[int, Path] = {}
+        # files that will be going to output.
+        self.proposed_files: List[Path] = []
+        # for flag -q; reduces info messages.
+        self.quiet: bool = False
+        # for flag -i; send files directly to proposed queue without user approval.
+        self.interactive: bool = True
+        # handler used to register incoming media files.
+        self.handler: MessageHandler = None
+
         super().__init__(chat_id, message_id)
 
+    def set_handler(self, _handler: MessageHandler):
+        self.handler = _handler
+
     async def process(self):
-        images: List[Image] = [Image.open(x) for x in self.proposed_files]
-        self.output = self.cwd + self.output + ".pdf"
+        with ThreadPoolExecutor(2) as executor:
+            await asyncio.get_event_loop().run_in_executor(
+                executor, self.process_executor
+            )
+
+    def process_executor(self):
+        images: List[ImageModule.Image] = [
+            ImageModule.open(x) for x in self.proposed_files
+        ]
         primary = images.pop(0)
-        await asyncio.sleep(0.001)
         primary.save(
-            self.output,
+            self.cwd / self.filename,
             "PDF",
             save_all=True,
             append_images=images,
             resolution=100.0,
         )
-
-    async def add_handlers(self, client: Client) -> None:
-        """add handler to Client according to the tasks."""
-        await super().add_handlers(client)
-        client.add_handler(
-            MessageHandler(
-                self.command_handler,
-                filters.photo
-                & filters.create(
-                    lambda _, client, message: client.task_pool.check_task(
-                        message.chat.id
-                    )
-                ),
-            )
-        )
-
-    @staticmethod
-    async def command_handler(client, message: Message):
-        """handler to determine photos under make task."""
-        current_task = client.task_pool.get_task(message.chat.id)
-        if current_task is not None and message.photo:
-            location = f"{current_task.cwd}{message.message_id}.jpeg"
-            await message.download(location)
-            if current_task.direct:
-                current_task.proposed_files.append(location)
-                await asyncio.gather(
-                    message.delete(),
-                    (
-                        message.reply_text("photo added successfully")
-                        if not current_task.quiet
-                        else asyncio.sleep(0)
-                    ),
-                )
-                return
-            current_task.temp_files[message.message_id] = location
-            await message.reply_photo(
-                photo=location,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "🔄", f"{message.message_id}:rotate:90"
-                            ),
-                            InlineKeyboardButton("✅", f"{message.message_id}:insert"),
-                            InlineKeyboardButton("❌", f"{message.message_id}:remove"),
-                        ]
-                    ]
-                ),
-            )
-            await message.delete()

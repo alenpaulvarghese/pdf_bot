@@ -1,10 +1,11 @@
+from tools import PdfTasks
 import asyncio
 
 
 class Worker(object):
     def __init__(self):
         self.worker_count = 2
-        self.process_queue = asyncio.Queue()
+        self.process_queue: asyncio.Queue[PdfTasks] = asyncio.Queue()
 
     async def start(self):
         for _ in range(self.worker_count):
@@ -12,11 +13,12 @@ class Worker(object):
 
     async def stop(self):
         for _ in range(self.worker_count):
-            self.new_task(None)
+            await self.process_queue.put(None)
         await self.process_queue.join()
 
-    def new_task(self, task):
+    def new_task(self, task) -> asyncio.Future:
         self.process_queue.put_nowait(task)
+        return task.status
 
     async def _worker(self):
         while True:
@@ -25,11 +27,8 @@ class Worker(object):
                 if task is None:
                     break
                 await task.process()
-                task.status = 1
+                task.status.set_result(0)
             except Exception as e:
-                task.error_code = str(e)
-                task.status = 2
+                task.status.set_exception(e)
             finally:
                 self.process_queue.task_done()
-                await asyncio.sleep(1)
-        print("worker finished")
