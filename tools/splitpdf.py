@@ -1,7 +1,6 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from concurrent.futures import ThreadPoolExecutor
 from tools.scaffold import AbstractTask
 from typing import List
 from pathlib import Path
@@ -19,11 +18,8 @@ class SplitPdf(AbstractTask):
         self.input_file = _path
         self.page_range = _range
 
-    async def process(self):
-        with ThreadPoolExecutor(2) as executor:
-            await asyncio.get_event_loop().run_in_executor(
-                executor, self.process_executor
-            )
+    async def process(self, executor):
+        await asyncio.get_event_loop().run_in_executor(executor, self.process_executor)
 
     def process_executor(self):
         with Pdf.open(self.input_file) as input_pdf:

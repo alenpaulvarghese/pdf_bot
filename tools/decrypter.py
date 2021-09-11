@@ -16,7 +16,7 @@ class Decrypter(AbstractTask):
         self.input_file = _path
         self.password = _pass
 
-    async def process(self):
+    async def process(self, _):
         cmd = [
             "qpdf",
             f"--password={self.password}",

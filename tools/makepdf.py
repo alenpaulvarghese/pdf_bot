@@ -1,7 +1,6 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from concurrent.futures import ThreadPoolExecutor
 from pyrogram.handlers import MessageHandler
 from tools.scaffold import AbstractTask  # pylint:disable=import-error
 from PIL import Image as ImageModule
@@ -28,13 +27,13 @@ class MakePdf(AbstractTask):
     def set_handler(self, _handler: MessageHandler):
         self.handler = _handler
 
-    async def process(self):
-        with ThreadPoolExecutor(2) as executor:
-            await asyncio.get_event_loop().run_in_executor(
-                executor, self.process_executor
-            )
+    async def process(self, executor):
+        await asyncio.get_event_loop().run_in_executor(executor, self.process_executor)
 
     def process_executor(self):
+        import time
+
+        time.sleep(30)
         images: List[ImageModule.Image] = [
             ImageModule.open(x) for x in self.proposed_files
         ]

@@ -18,7 +18,7 @@ class Extractor(AbstractTask):
         self.input_file = _path
         self.page_range = _range
 
-    async def process(self):
+    async def process(self, _):
         # https://codereview.stackexchange.com/a/5202/244604
         _tcmd = ["pdftoppm", f"{self.input_file}", f"{self.cwd / 'output'}", "-jpeg"]
         grouped = [

@@ -1,7 +1,6 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from concurrent.futures import ThreadPoolExecutor
 from pyrogram.handlers import MessageHandler
 from tools.scaffold import AbstractTask
 from typing import List, Dict
@@ -28,13 +27,18 @@ class Merge(AbstractTask):
     def set_handler(self, _handler: MessageHandler):
         self.handler = _handler
 
-    async def process(self):
-        with ThreadPoolExecutor(2) as executor:
+    async def process(self, executor):
+        try:
             await asyncio.get_event_loop().run_in_executor(
                 executor, self.process_executor
             )
+        except asyncio.CancelledError:
+            raise Exception("Server Shutting down, try again later")
 
     def process_executor(self):
+        from time import sleep
+
+        sleep(30)
         with Pdf.open(self.proposed_files.pop(0)) as init_pdf:
             for paths in self.proposed_files:
                 with Pdf.open(paths) as extension:

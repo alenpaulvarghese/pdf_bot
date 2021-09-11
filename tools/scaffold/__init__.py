@@ -24,5 +24,8 @@ class AbstractTask(object):
         path.mkdir(parents=True, exist_ok=True)
         return path
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.chat_id})"
+
     def cleanup(self) -> None:
         shutil.rmtree(self.cwd)

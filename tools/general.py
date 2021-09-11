@@ -63,11 +63,11 @@ def mediagroup_generator(
 
 def parse_range(input_string: str) -> List[int]:
     """Parser used to parse page-range from given string"""
-    # matches (1 hyphen) seprated integers like 20-22
+    # matches hyphen seprated integers like (20-22)
     __pattern1__ = r"(^0*[1-9]{1}\d*)-(0*[1-9]{1}\d*$)"
-    # matches a single integer like 20
+    # matches a single integer like (20)
     __pattern2__ = r"(^0*[1-9]\d*$)"
-    # matches comma seprated integers like 20,21,22,33
+    # matches comma seprated integers like (20,21,22,33)
     __pattern3__ = r"^(?:0*[1-9]{1}\d*,)+(?:0*[1-9]{1}\d*)?$"
 
     if (match := re.search(__pattern1__, input_string)) is not None:

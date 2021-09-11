@@ -16,7 +16,7 @@ class Encrypter(AbstractTask):
         self.input_file = _path
         self.password = _pass
 
-    async def process(self):
+    async def process(self, _):
         pdf_check = await asyncio.create_subprocess_shell(
             f"qpdf --is-encrypted {self.input_file}"
         )
