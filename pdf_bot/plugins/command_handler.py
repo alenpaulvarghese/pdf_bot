@@ -1,14 +1,14 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
+from pdfbot import Pdfbot  # pylint:disable=import-error
+from pyrogram import filters
 from pyrogram.types import (
-    Message,
     CallbackQuery,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    Message,
 )
-from pyrogram import filters
-from pdfbot import Pdfbot  # pylint:disable=import-error
 
 __help__ = ["makepdf", "merge", "encrypt", "decrypt", "extract"]
 

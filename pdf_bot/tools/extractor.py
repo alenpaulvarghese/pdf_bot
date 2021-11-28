@@ -1,11 +1,12 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from tools.scaffold import AbstractTask
-from itertools import groupby, count
+import asyncio
+from itertools import count, groupby
 from pathlib import Path
 from typing import Set
-import asyncio
+
+from tools.scaffold import AbstractTask
 
 
 class Extractor(AbstractTask):
@@ -18,7 +19,7 @@ class Extractor(AbstractTask):
         self.input_file = _path
         self.page_range = _range
 
-    async def process(self, _):
+    async def process(self):
         # https://codereview.stackexchange.com/a/5202/244604
         _tcmd = ["pdftoppm", f"{self.input_file}", f"{self.cwd / 'output'}", "-jpeg"]
         grouped = [
@@ -31,6 +32,7 @@ class Extractor(AbstractTask):
                 _args = ["-f", f"{group[0]}", "-l", f"{group[-1]}"]
             else:
                 _args = ["-f", f"{group[0]}", "-l", f"{group[0]}"]
+            print(_tcmd + _args)
             proc = await asyncio.create_subprocess_shell(
                 " ".join(_tcmd + _args),
                 stdout=asyncio.subprocess.PIPE,

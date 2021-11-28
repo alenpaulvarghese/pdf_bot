@@ -1,11 +1,10 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from tools import task_checker, slugify
-from pyrogram.types import Message
-from pyrogram import filters
-from tools import Encrypter
 from pdfbot import Pdfbot
+from pyrogram import filters
+from pyrogram.types import Message
+from tools import Encrypter, slugify, task_checker
 
 
 @Pdfbot.on_message(filters.command(["encrypt"]) & filters.create(task_checker))

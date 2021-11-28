@@ -1,9 +1,9 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
 import asyncio
 import shutil
+from pathlib import Path
 
 
 class AbstractTask(object):
@@ -26,6 +26,9 @@ class AbstractTask(object):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.chat_id})"
+
+    def set_filename(self, name: str) -> None:
+        self.filename = name
 
     def cleanup(self) -> None:
         shutil.rmtree(self.cwd)

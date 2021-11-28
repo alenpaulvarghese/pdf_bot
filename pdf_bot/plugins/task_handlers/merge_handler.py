@@ -1,16 +1,17 @@
-from tools import Merge, task_checker, slugify
-from pyrogram.handlers import MessageHandler
+import asyncio
+import re
+
+from pdfbot import Pdfbot
 from pyrogram import filters
+from pyrogram.handlers import MessageHandler
 from pyrogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    ReplyKeyboardMarkup,
     KeyboardButton,
     Message,
+    ReplyKeyboardMarkup,
 )
-from pdfbot import Pdfbot
-import asyncio
-import re
+from tools import Merge, slugify, task_checker
 
 
 @Pdfbot.on_message(filters.command("merge") & filters.create(task_checker))

@@ -1,9 +1,10 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from tools.scaffold import AbstractTask
-from pathlib import Path
 import asyncio
+from pathlib import Path
+
+from tools.scaffold import AbstractTask
 
 
 class Decrypter(AbstractTask):
@@ -16,7 +17,7 @@ class Decrypter(AbstractTask):
         self.input_file = _path
         self.password = _pass
 
-    async def process(self, _):
+    async def process(self):
         cmd = [
             "qpdf",
             f"--password={self.password}",

@@ -1,12 +1,12 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from tools import task_checker, parse_range, slugify
-from pyrogram.types import Message
-from pyrogram import filters
-from tools import SplitPdf
-from pdfbot import Pdfbot
 import asyncio
+
+from pdfbot import Pdfbot
+from pyrogram import filters
+from pyrogram.types import Message
+from tools import SplitPdf, parse_range, slugify, task_checker
 
 
 @Pdfbot.on_message(filters.command(["split"]) & filters.create(task_checker))

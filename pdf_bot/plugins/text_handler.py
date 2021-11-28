@@ -1,8 +1,8 @@
+from pdfbot import Pdfbot
+from pyrogram import filters
+from pyrogram.types import Message, ReplyKeyboardRemove
 from tools.makepdf import MakePdf
 from tools.merge import Merge
-from pyrogram.types import Message, ReplyKeyboardRemove
-from pyrogram import filters
-from pdfbot import Pdfbot
 
 
 @Pdfbot.on_message(filters.regex(r"^Done$|^Cancel$"))

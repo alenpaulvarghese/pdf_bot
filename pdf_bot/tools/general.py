@@ -1,13 +1,32 @@
-from typing import List, Iterator
+import asyncio
+import re
+from pathlib import Path
+from typing import Iterator, List
+
 from PIL import Image as ImageModule
 from pyrogram.types import (
-    InlineKeyboardMarkup,
     InlineKeyboardButton,
+    InlineKeyboardMarkup,
     InputMediaPhoto,
     Message,
 )
-from pathlib import Path
-import re
+
+
+async def get_pages(path: Path) -> int:
+    """Get total pages of a pdf file."""
+    process = await asyncio.create_subprocess_shell(
+        f"pdfinfo {path}",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await process.communicate()
+    if stderr:
+        raise Exception(stderr.decode("utf-8"))
+    else:
+        pages = re.search(r"^Pages: +(\d+)$", stdout.decode("utf-8"), re.MULTILINE)
+        if pages is None:
+            raise Exception("something went wrong")
+        return int(pages.group(1))
 
 
 def slugify(string) -> str:

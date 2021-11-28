@@ -1,12 +1,14 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from concurrent.futures.thread import ThreadPoolExecutor
-from tools.utils.exceptions import ServerShuttingDown
-from typing import List, Optional
-from tools import PdfTasks
-import logging
 import asyncio
+import inspect
+import logging
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import List, Optional
+
+from tools import PdfTasks
+from tools.utils.exceptions import ServerShuttingDown
 
 _LOG = logging.getLogger(__name__)
 
@@ -40,6 +42,10 @@ class Worker(object):
         self.process_queue.put_nowait(task)
         return task.status
 
+    @property
+    def run_in_executor(self):
+        return asyncio.get_running_loop().run_in_executor
+
     async def _worker(self):
         while True:
             _task = await self.process_queue.get()
@@ -48,7 +54,9 @@ class Worker(object):
                 if _task is None:
                     break
                 _process = asyncio.create_task(
-                    _task.process(self.thread_pool),
+                    _task.process()
+                    if inspect.iscoroutinefunction(_task.process)
+                    else self.run_in_executor(self.thread_pool, _task.process),
                     name=_task.__repr__(),
                 )
                 self.running_processes.append(_process)

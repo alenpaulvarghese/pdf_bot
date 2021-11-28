@@ -1,16 +1,12 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from tools.general import rotate_image  # pylint:disable=import-error
-from pyrogram import filters
-from pdfbot import Pdfbot  # pylint:disable=import-error
-from pyrogram.types import (
-    CallbackQuery,
-    InputMediaPhoto,
-    ReplyKeyboardRemove,
-)
-from tools import MakePdf
 import asyncio
+
+from pdfbot import Pdfbot
+from pyrogram import filters
+from pyrogram.types import CallbackQuery, InputMediaPhoto, ReplyKeyboardRemove
+from tools import MakePdf, rotate_image
 
 
 @Pdfbot.on_callback_query(filters.regex(r"insert|remove|rotate|^rm_task$|^del$"))

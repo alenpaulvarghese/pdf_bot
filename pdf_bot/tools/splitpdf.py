@@ -1,11 +1,12 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from tools.scaffold import AbstractTask
-from typing import List
 from pathlib import Path
+from typing import List
+
 from pikepdf import Pdf
-import asyncio
+
+from tools.scaffold import AbstractTask
 
 
 class SplitPdf(AbstractTask):
@@ -18,10 +19,7 @@ class SplitPdf(AbstractTask):
         self.input_file = _path
         self.page_range = _range
 
-    async def process(self, executor):
-        await asyncio.get_event_loop().run_in_executor(executor, self.process_executor)
-
-    def process_executor(self):
+    def process(self):
         with Pdf.open(self.input_file) as input_pdf:
             with Pdf.new() as output_pdf:
                 for index in self.page_range:

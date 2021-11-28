@@ -1,14 +1,16 @@
-from pyrogram.handlers.handler import Handler
-from concurrent.futures import ThreadPoolExecutor
-from pool import TaskPool, Worker
-from pyrogram import Client
-from typing import Optional
-from logger import logging
-from config import Config
-from pathlib import Path
 import asyncio
 import signal
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import Optional
+
 import yaml
+from pyrogram import Client
+from pyrogram.handlers.handler import Handler
+
+from config import Config
+from logger import logging
+from pool import TaskPool, Worker
 
 _LOG = logging.getLogger(__name__)
 
@@ -61,6 +63,6 @@ class Pdfbot(Client):
         asyncio.get_running_loop().stop()
 
     def load_locale(self):
-        with open(Path("locale", "en.yaml"), "r") as f:
+        with open(Path("..", "locale", "en.yaml"), "r") as f:
             self.language = yaml.load(f, Loader=yaml.CLoader)
         _LOG.info("Languages loaded")

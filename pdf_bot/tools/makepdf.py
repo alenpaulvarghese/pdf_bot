@@ -1,12 +1,13 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from pyrogram.handlers import MessageHandler
-from tools.scaffold import AbstractTask  # pylint:disable=import-error
-from PIL import Image as ImageModule
-from typing import List, Dict
 from pathlib import Path
-import asyncio
+from typing import Dict, List
+
+from PIL import Image as ImageModule
+from pyrogram.handlers import MessageHandler
+
+from tools.scaffold import AbstractTask  # pylint:disable=import-error
 
 
 class MakePdf(AbstractTask):
@@ -27,13 +28,7 @@ class MakePdf(AbstractTask):
     def set_handler(self, _handler: MessageHandler):
         self.handler = _handler
 
-    async def process(self, executor):
-        await asyncio.get_event_loop().run_in_executor(executor, self.process_executor)
-
-    def process_executor(self):
-        import time
-
-        time.sleep(30)
+    def process(self):
         images: List[ImageModule.Image] = [
             ImageModule.open(x) for x in self.proposed_files
         ]
