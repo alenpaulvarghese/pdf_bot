@@ -5,7 +5,7 @@ import asyncio
 import inspect
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from tools import PdfTasks
 from tools.utils.exceptions import ServerShuttingDown
@@ -17,7 +17,7 @@ class Worker(object):
     def __init__(self, thread_pool: ThreadPoolExecutor):
         self.worker_count = 2
         self.thread_pool = thread_pool
-        self.running_processes: List[asyncio.Task] = []
+        self.running_processes: List[Union[asyncio.Future, asyncio.Task]] = []
         self.process_queue: asyncio.Queue[PdfTasks] = asyncio.Queue()
 
     def start(self, loop: asyncio.BaseEventLoop):
@@ -53,11 +53,10 @@ class Worker(object):
             try:
                 if _task is None:
                     break
-                _process = asyncio.create_task(
-                    _task.process()
+                _process = (
+                    asyncio.create_task(_task.process(), name=repr(_task))
                     if inspect.iscoroutinefunction(_task.process)
-                    else self.run_in_executor(self.thread_pool, _task.process),
-                    name=_task.__repr__(),
+                    else self.run_in_executor(self.thread_pool, _task.process)
                 )
                 self.running_processes.append(_process)
                 await _process

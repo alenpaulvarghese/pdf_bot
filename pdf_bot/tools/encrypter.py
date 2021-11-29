@@ -1,8 +1,9 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-import asyncio
 from pathlib import Path
+
+import pikepdf
 
 from tools.scaffold import AbstractTask
 
@@ -17,27 +18,12 @@ class Encrypter(AbstractTask):
         self.input_file = _path
         self.password = _pass
 
-    async def process(self):
-        pdf_check = await asyncio.create_subprocess_shell(
-            f"qpdf --is-encrypted {self.input_file}"
+    def process(self):
+        try:
+            main_obj = pikepdf.open(self.input_file)
+        except pikepdf._qpdf.PasswordError:
+            raise Exception("File is already encrypted")
+        enc_obj = pikepdf.models.encryption.Encryption(
+            owner=self.password, user=self.password, aes=True
         )
-        if (await pdf_check.wait()) == 0:
-            raise Exception("The given file is already encrypted")
-        cmd = [
-            "qpdf",
-            "--encrypt",
-            f"'{self.password}'",
-            f"'{self.password}'",
-            "128",
-            "--",
-            f"{self.input_file}",
-            f"{self.cwd / self.filename}",
-        ]
-        proc = await asyncio.create_subprocess_shell(
-            " ".join(cmd),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        if stderr:
-            raise Exception(stderr.decode("utf-8"))
+        main_obj.save(self.cwd / self.filename, encryption=enc_obj)

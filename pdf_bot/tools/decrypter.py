@@ -1,8 +1,9 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-import asyncio
 from pathlib import Path
+
+import pikepdf
 
 from tools.scaffold import AbstractTask
 
@@ -17,19 +18,11 @@ class Decrypter(AbstractTask):
         self.input_file = _path
         self.password = _pass
 
-    async def process(self):
-        cmd = [
-            "qpdf",
-            f"--password={self.password}",
-            "--decrypt",
-            f"{self.input_file}",
-            f"{self.cwd / self.filename}",
-        ]
-        proc = await asyncio.create_subprocess_shell(
-            " ".join(cmd),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        if stderr:
-            raise Exception(stderr.decode("utf-8"))
+    def process(self):
+        try:
+            main_obj = pikepdf.open(self.input_file, password=self.password)
+        except pikepdf._qpdf.PasswordError:
+            raise Exception("Wrong password")
+        if not main_obj.is_encrypted:
+            raise Exception("File is not encrypted")
+        main_obj.save(self.cwd / self.filename, encryption=False)
