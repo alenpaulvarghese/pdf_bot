@@ -4,4 +4,4 @@ pikepdf
 pyrogram
 tgcrypto
 pylovepdf
-ghostscript
+python-poppler

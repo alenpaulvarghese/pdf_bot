@@ -8,7 +8,6 @@ from pdfbot import Pdfbot
 from pyrogram import filters
 from pyrogram.types import InputMediaPhoto, Message
 from tools import Extractor, mediagroup_generator, parse_range, task_checker
-from tools.general import get_pages
 
 
 @Pdfbot.on_message(filters.command(["extract"]) & filters.create(task_checker))
@@ -29,18 +28,12 @@ async def extract_handler(client: Pdfbot, message: Message) -> None:
     await message.reply_to_message.download(input_file)
     await status.edit("__processing...__")
     try:
-        total_pages = await get_pages(input_file)
         page_range = parse_range(message.command[1])
         page_range.sort()
-        if page_range[-1] > total_pages:
-            await status.edit(
-                f"__error: page range {page_range[-1]} is greater than total pages {total_pages}__"
-            )
-            return
         task.set_configuration(input_file, set(page_range))
         await client.process_pool.new_task(task)
         image_list = [
-            InputMediaPhoto(str(task.cwd / f"output-{index:01}.jpg"), f"page-{index}")
+            InputMediaPhoto(str(task.cwd / f"output-{index}.jpg"), f"page-{index}")
             for index in task.page_range
         ]
         for media_group in mediagroup_generator(image_list):

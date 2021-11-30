@@ -1,10 +1,10 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-import asyncio
-from itertools import count, groupby
 from pathlib import Path
 from typing import Set
+
+from poppler import PageRenderer, load_from_file
 
 from tools.scaffold import AbstractTask
 
@@ -20,24 +20,15 @@ class Extractor(AbstractTask):
         self.page_range = _range
 
     async def process(self):
-        # https://codereview.stackexchange.com/a/5202/244604
-        _tcmd = ["pdftoppm", f"{self.input_file}", f"{self.cwd / 'output'}", "-jpeg"]
-        grouped = [
-            list(g)
-            for _, g in groupby(self.page_range, lambda n, c=count(): n - next(c))
-        ]
-        for group in grouped:
-            _args = None
-            if len(group) >= 2:
-                _args = ["-f", f"{group[0]}", "-l", f"{group[-1]}"]
-            else:
-                _args = ["-f", f"{group[0]}", "-l", f"{group[0]}"]
-            print(_tcmd + _args)
-            proc = await asyncio.create_subprocess_shell(
-                " ".join(_tcmd + _args),
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+        main_obj = load_from_file(self.input_file)
+        last_page_range = max(self.page_range)
+        if last_page_range > main_obj.pages:
+            raise Exception(
+                f"page range {last_page_range} is greater than total pages {main_obj.pages}"
             )
-            _, stderr = await proc.communicate()
-            if stderr:
-                raise Exception(stderr.decode("utf-8"))
+        page_render = PageRenderer()
+        for index in self.page_range:
+            render_obj = page_render.render_page(
+                main_obj.create_page(index), xres=600, yres=600
+            )
+            render_obj.save(self.cwd / f"output-{index}.jpg", "jpeg")

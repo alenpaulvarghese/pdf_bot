@@ -7,7 +7,6 @@ from .decrypter import Decrypter
 from .encrypter import Encrypter
 from .extractor import Extractor
 from .general import (
-    get_pages,
     mediagroup_generator,
     parse_range,
     rotate_image,
@@ -27,6 +26,5 @@ __all__ = [
     "task_checker",
     "rotate_image",
     "PdfTasks",
-    "get_pages",
     "slugify",
 ]
