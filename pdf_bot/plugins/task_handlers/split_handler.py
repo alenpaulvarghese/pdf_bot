@@ -40,7 +40,7 @@ async def encrypt_handler(client: Pdfbot, message: Message) -> None:
         task.set_configuration(input_file, page_range)
         await client.process_pool.new_task(task)
         await asyncio.gather(
-            message.reply_chat_action("upload_photo"),
+            message.reply_chat_action("upload_document"),
             message.reply_document(task.cwd / task.filename),
         )
         await status.delete()
