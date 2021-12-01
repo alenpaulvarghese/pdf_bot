@@ -15,9 +15,10 @@ from .general import (
 )
 from .makepdf import MakePdf
 from .merge import Merge
+from .rotate import RotatePdf
 from .splitpdf import SplitPdf
 
-PdfTasks = Union[MakePdf, Merge, Encrypter, Decrypter, Extractor, SplitPdf]
+PdfTasks = Union[MakePdf, Merge, Encrypter, Decrypter, Extractor, SplitPdf, RotatePdf]
 
 
 __all__ = [
