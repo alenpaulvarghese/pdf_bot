@@ -27,3 +27,4 @@ class Encrypter(AbstractTask):
             owner=self.password, user=self.password, aes=True
         )
         main_obj.save(self.cwd / self.filename, encryption=enc_obj)
+        main_obj.close()

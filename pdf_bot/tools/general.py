@@ -32,6 +32,7 @@ def rotate_image(file_path: Path, degree: int) -> Path:
     origin = ImageModule.open(file_path)
     rotated_image = origin.rotate(degree, expand=True)
     rotated_image.save(file_path)
+    origin.close()
     return file_path
 
 

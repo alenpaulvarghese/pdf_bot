@@ -32,3 +32,4 @@ class Extractor(AbstractTask):
                 main_obj.create_page(index), xres=600, yres=600
             )
             render_obj.save(self.cwd / f"output-{index}.jpg", "jpeg")
+            del render_obj

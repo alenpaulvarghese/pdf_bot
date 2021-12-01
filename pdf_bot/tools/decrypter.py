@@ -26,3 +26,4 @@ class Decrypter(AbstractTask):
         if not main_obj.is_encrypted:
             raise Exception("File is not encrypted")
         main_obj.save(self.cwd / self.filename, encryption=False)
+        main_obj.close()

@@ -40,3 +40,4 @@ class MakePdf(AbstractTask):
             append_images=images,
             resolution=100.0,
         )
+        primary.close()
