@@ -37,6 +37,7 @@ class Worker(object):
         for _ in range(self.worker_count):
             await self.process_queue.put(None)
         await self.process_queue.join()
+        self.thread_pool.shutdown(cancel_futures=True, wait=False)
 
     def new_task(self, task) -> asyncio.Future:
         self.process_queue.put_nowait(task)
