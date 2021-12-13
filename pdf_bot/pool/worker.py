@@ -32,7 +32,6 @@ class Worker(object):
             task.status.set_exception(ServerShuttingDown())
             self.process_queue.task_done()
         for ps in self.running_processes:
-            _LOG.debug("\t - Cancelling running process %s", ps.get_name())
             ps.cancel()
         for _ in range(self.worker_count):
             await self.process_queue.put(None)

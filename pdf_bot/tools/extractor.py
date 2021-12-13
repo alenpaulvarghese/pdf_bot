@@ -19,7 +19,7 @@ class Extractor(AbstractTask):
         self.input_file = _path
         self.page_range = _range
 
-    async def process(self):
+    def process(self):
         main_obj = load_from_file(self.input_file)
         last_page_range = max(self.page_range)
         if last_page_range > main_obj.pages:
@@ -29,7 +29,8 @@ class Extractor(AbstractTask):
         page_render = PageRenderer()
         for index in self.page_range:
             render_obj = page_render.render_page(
-                main_obj.create_page(index), xres=600, yres=600
+                main_obj.create_page(index - 1), xres=600, yres=600
             )
             render_obj.save(self.cwd / f"output-{index}.jpg", "jpeg")
             del render_obj
+        del main_obj, last_page_range, page_render
