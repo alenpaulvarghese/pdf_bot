@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Set
 
-from poppler import PageRenderer, load_from_file
+import fitz
 
 from tools.scaffold import AbstractTask
 
@@ -20,17 +20,17 @@ class Extractor(AbstractTask):
         self.page_range = _range
 
     def process(self):
-        main_obj = load_from_file(self.input_file)
+        main_obj = fitz.Document(self.input_file)
         last_page_range = max(self.page_range)
-        if last_page_range > main_obj.pages:
+        if last_page_range > main_obj.page_count:
             raise Exception(
                 f"page range {last_page_range} is greater than total pages {main_obj.pages}"
             )
-        page_render = PageRenderer()
         for index in self.page_range:
-            render_obj = page_render.render_page(
-                main_obj.create_page(index - 1), xres=600, yres=600
+            render_obj = main_obj.load_page(index)
+            pix_obj = render_obj.get_pixmap(dpi=400)
+            pix_obj.pil_save(
+                self.cwd / f"output-{index}.jpg", optimize=True, dpi=(500, 500)
             )
-            render_obj.save(self.cwd / f"output-{index}.jpg", "jpeg")
-            del render_obj
-        del main_obj, last_page_range, page_render
+            del render_obj, pix_obj
+        del main_obj, last_page_range

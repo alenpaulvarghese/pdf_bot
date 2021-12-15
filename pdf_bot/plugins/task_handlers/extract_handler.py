@@ -33,7 +33,9 @@ async def extract_handler(client: Pdfbot, message: Message) -> None:
         task.set_configuration(input_file, set(page_range))
         await client.process_pool.new_task(task)
         image_list = [
-            InputMediaPhoto(str(task.cwd / f"output-{index}.jpg"), f"page-{index}")
+            InputMediaPhoto(
+                str(task.cwd / f"output-{index}.jpg"), caption=f"page-{index}"
+            )
             for index in task.page_range
         ]
         for media_group in mediagroup_generator(image_list):

@@ -3,5 +3,4 @@ pillow
 pikepdf
 pyrogram
 tgcrypto
-pylovepdf
-python-poppler
+PyMuPDF
