@@ -33,4 +33,5 @@ class Extractor(AbstractTask):
                 self.cwd / f"output-{index}.jpg", optimize=True, dpi=(500, 500)
             )
             del render_obj, pix_obj
+        main_obj.close()
         del main_obj, last_page_range

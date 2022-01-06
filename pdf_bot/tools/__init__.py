@@ -23,9 +23,16 @@ PdfTasks = Union[MakePdf, Merge, Encrypter, Decrypter, Extractor, SplitPdf, Rota
 
 __all__ = [
     "mediagroup_generator",
-    "parse_range",
-    "task_checker",
     "rotate_image",
+    "task_checker",
+    "parse_range",
+    "Encrypter",
+    "Decrypter",
+    "Extractor",
+    "RotatePdf",
+    "SplitPdf",
     "PdfTasks",
+    "MakePdf",
     "slugify",
+    "Merge",
 ]
