@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "pdf_bot"
+version = "0.1.0"
+description = "Pdf utility bot written in python"
+authors = ["alenpaul2001 <alenpaul2001@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+PyYAML = "^6.0"
+Pillow = "^8.4.0"
+pikepdf = "^4.2.0"
+Pyrogram = "^1.2.20"
+TgCrypto = "^1.2.2"
+PyMuPDF = "^1.19.3"
+
+
+[tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+mypy = "^0.920"
+black = "^21.12b0"
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
