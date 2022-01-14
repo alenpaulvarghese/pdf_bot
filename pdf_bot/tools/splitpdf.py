@@ -1,10 +1,11 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
+from itertools import count, groupby
 from pathlib import Path
 from typing import List
 
-from pikepdf import Pdf
+import fitz
 
 from tools.scaffold import AbstractTask
 
@@ -20,8 +21,16 @@ class SplitPdf(AbstractTask):
         self.page_range = _range
 
     def process(self):
-        with Pdf.open(self.input_file) as input_pdf:
-            with Pdf.new() as output_pdf:
-                for index in self.page_range:
-                    output_pdf.pages.append(input_pdf.pages[index - 1])
-                output_pdf.save(self.cwd / self.filename)
+        # https://codereview.stackexchange.com/a/5202/244604
+        grouped = [
+            tuple(g)
+            for _, g in groupby(self.page_range, lambda n, c=count(): n - next(c))
+        ]
+        with fitz.Document(self.input_file) as input_pdf:
+            with fitz.Document() as output_pdf:
+                for index, group in enumerate(grouped, 1):
+                    final = 1 if index == len(grouped) else 0
+                    output_pdf.insert_pdf(
+                        input_pdf, group[0] - 1, group[-1] - 1, final=final
+                    )
+                output_pdf.save(self.cwd / self.filename, 3, 3, True)
