@@ -1,7 +1,7 @@
 # (c) AlenPaulVarghese
 # -*- coding: utf-8 -*-
 
-from pdfbot import Pdfbot  # pylint:disable=import-error
+from pdfbot import Pdfbot
 from pyrogram import filters
 from pyrogram.types import (
     CallbackQuery,
@@ -10,7 +10,7 @@ from pyrogram.types import (
     Message,
 )
 
-__help__ = ["makepdf", "merge", "encrypt", "decrypt", "extract"]
+__help__ = ["makepdf", "merge", "encrypt", "decrypt", "extract", "rotate", "split"]
 
 
 # start command handler
@@ -34,6 +34,22 @@ async def start_handler(client: Pdfbot, message: Message) -> None:
         client.language["STRINGS"]["help"]["start"],
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("help", "page-help")]]
+        ),
+    )
+
+
+@Pdfbot.on_message(filters.command("help") & filters.private)
+async def _(client: Pdfbot, message: Message) -> None:
+    return_message = await message.reply_text("processing")
+    await help_cbhandler(
+        client,
+        CallbackQuery(
+            id=123,
+            client=client,
+            message=return_message,
+            chat_instance="-1234",
+            from_user=message.from_user,
+            data="page-help",
         ),
     )
 
