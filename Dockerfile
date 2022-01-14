@@ -4,8 +4,18 @@ WORKDIR /app/
 
 RUN apt update -y && apt-get install -y cmake
 
+
+ENV PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    # do not ask any interactive question
+    POETRY_NO_INTERACTION=1
+
+RUN pip install poetry
+
 COPY . /app/
 
-RUN python -m pip install -r requirements.txt
+# install dependencies
+RUN poetry config virtualenvs.create false && poetry install --no-dev --no-ansi
 
 CMD ["bash", "run.sh"]
