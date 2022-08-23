@@ -14,7 +14,7 @@ A PDF Utility Telegram Bot
 Simply follow the steps:
 
 ```sh
-git clone https://github.com/alenpaul2001/pdf_bot.git
+git clone https://github.com/hybridvamp/pdf_bot.git
 cd pdf_bot
 # <edit sample.env appropriately and rename it to .env>
 docker build . --rm --force-rm --no-cache=true -t pdfbot
