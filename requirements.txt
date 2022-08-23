@@ -4,3 +4,4 @@ pikepdf
 pyrogram
 tgcrypto
 PyMuPDF
+python-dotenv
