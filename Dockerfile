@@ -17,5 +17,6 @@ COPY . /app/
 
 # install dependencies
 RUN poetry config virtualenvs.create false && poetry install --no-dev --no-ansi
+RUN pip3 install -r requirements.txt
 
 CMD ["bash", "run.sh"]
